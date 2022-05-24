@@ -3,6 +3,7 @@ import argparse
 import os
 from os import listdir
 from os.path import isfile, join
+import subprocess
 
 
 def main():
@@ -26,6 +27,24 @@ def main():
     file_names = [os.path.join(in_dir, f) for f in listdir(in_dir) if isfile(join(in_dir, f))]
     if not file_names:
         raise Exception(f"The directory {in_dir} is empty")
+    for file_name in file_names:
+        prefix, suffix = file_name.strip().split(".")
+        if suffix not in ["fna", "faa"]:
+            raise Exception(f"The file {file_name} does not have the suffix faa or fna. Cannot proceed as I don't "
+                            f"know if this is a nucleotide sequence or amino acid sequence.")
+    # Now actually do the sketching
+    for file_name in file_names:
+        prefix, suffix = file_name.strip().split(".")
+        sketch_type = ""
+        if suffix == "fna":
+            sketch_type = "dna"
+        elif suffix == "faa":
+            sketch_type = "protein"
+        else:
+            raise Exception(f"Unknown extension {suffix}.")
+        print(f"Sketching the entries in the file {file_name}")
+        cmd = f"sourmash sketch {sketch_type} -p k={ksize},scaled={scale_factor},abund --output-dir={out_dir} --singleton {file_name}"
+        subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
 
 
 if __name__ == "__main__":
