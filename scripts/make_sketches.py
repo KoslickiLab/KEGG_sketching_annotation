@@ -43,7 +43,8 @@ def main():
         else:
             raise Exception(f"Unknown extension {suffix}.")
         print(f"Sketching the entries in the file {file_name}")
-        cmd = f"sourmash sketch {sketch_type} -p k={ksize},scaled={scale_factor},abund --output-dir={out_dir} --singleton {file_name}"
+        out_file = f"{os.path.join(out_dir, os.path.basename(file_name))}_k_{ksize}_scale_{scale_factor}.sig"
+        cmd = f"sourmash sketch {sketch_type} -p k={ksize},scaled={scale_factor},abund -o {out_file} --singleton {file_name}"
         subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
 
 
