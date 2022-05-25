@@ -24,7 +24,7 @@ def main():
         raise Exception(f"Scale factor must be an integer greater than or equal to 1")
     if not os.path.exists(in_dir):
         raise Exception(f"The supplied input directory {in_dir} does not exist.")
-    file_names = [os.path.join(in_dir, f) for f in listdir(in_dir) if isfile(join(in_dir, f))]
+    file_names = [os.path.abspath(os.path.join(in_dir, f)) for f in listdir(in_dir) if isfile(join(in_dir, f))]
     if not file_names:
         raise Exception(f"The directory {in_dir} is empty")
     for file_name in file_names:
