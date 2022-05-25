@@ -20,6 +20,8 @@ def main():
     scale_factor = args.scale_factor
     in_dir = args.in_dir
     out_dir = args.out_dir
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
     if scale_factor < 1:
         raise Exception(f"Scale factor must be an integer greater than or equal to 1")
     if not os.path.exists(in_dir):
