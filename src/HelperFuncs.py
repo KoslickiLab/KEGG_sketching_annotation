@@ -72,3 +72,7 @@ def make_sketches(ksize, scale_factor, file_name, sketch_type, out_dir, per_reco
     else:
         cmd = f"sourmash sketch {sketch_type} -p k={ksize},scaled={scale_factor},abund -o {out_file} --singleton {file_name}"
     subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+
+
+# TODO: make a sourmash gather helper function
+# TODO: make binary metric measures
