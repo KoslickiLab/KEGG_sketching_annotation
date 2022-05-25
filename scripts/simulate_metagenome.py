@@ -49,6 +49,7 @@ def compute_rel_abundance(simulation_fq_file):
           f"with the most frequent one occurring {np.max(list(matches_tally.values()))} times")
     return matches_tally
 
+
 def main():
     parser = argparse.ArgumentParser(description="This script uses BBTools randomreads.sh to simulate reads from a"
                                                  "metagenome.",
@@ -57,7 +58,7 @@ def main():
     parser.add_argument('-o', '--out_file', type=str, help="The output simulated metagenome.")
     parser.add_argument('-n', '--num_reads', type=int, help="The number of reads to simulate.")
     parser.add_argument('-l', '--len_reads', type=int, help="The length of the reads to generate.")
-    parser.add_argument("--noisy", action='store_true', help="The full path to the directory that the files will be written")
+    parser.add_argument("--noisy", action='store_true', help="If you want to inject noise in the simulated reads")
     # parse the args
     args = parser.parse_args()
     reference_file = args.reference_file
