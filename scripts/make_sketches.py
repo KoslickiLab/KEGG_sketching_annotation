@@ -4,26 +4,7 @@ import os
 from os import listdir
 from os.path import isfile, join
 import subprocess
-
-
-def make_sketches(ksize, scale_factor, file_name, sketch_type, out_dir, per_record=False):
-    """
-    This helper function will create the signature/sketches using sourmash
-    :param ksize: the k-size to use
-    :param scale_factor: the denominator of the scale factor to use (so >=1)
-    :param file_name: the file to sketch
-    :param sketch_type: amino acid (aa) or nucleotide (nt)
-    :param out_dir: Where to write the signature
-    :param per_record: If you want sketches of each entry in the fasta file, or just of the full fasta file (default: False)
-    :return: None
-    """
-    out_file = f"{os.path.join(out_dir, os.path.basename(file_name))}_k_{ksize}_scale_{scale_factor}.sig"
-    if per_record:
-        cmd = f"sourmash sketch {sketch_type} -p k={ksize},scaled={scale_factor},abund -o {out_file} --singleton {file_name}"
-    else:
-        cmd = f"sourmash sketch {sketch_type} -p k={ksize},scaled={scale_factor},abund -o {out_file} --singleton {file_name}"
-    subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
-
+from ..src.HelperFuncs import make_sketches
 
 def main():
     parser = argparse.ArgumentParser(description="This script creates training/reference sketches of KEGG. "

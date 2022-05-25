@@ -7,9 +7,7 @@ import subprocess
 import re
 import numpy as np
 from collections import Counter
-
-from make_sketches import make_sketches
-
+from ..src.HelperFuncs import make_sketches, run_simulation, compute_rel_abundance
 
 def main():
     parser = argparse.ArgumentParser(description="This script will use Sourmash gather to classify a metagenome and report statistics on it.",
