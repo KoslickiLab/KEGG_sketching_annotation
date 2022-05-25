@@ -7,11 +7,8 @@ import subprocess
 import re
 import numpy as np
 from collections import Counter
-from ..src.HelperFuncs import run_simulation
+from ..src.HelperFuncs import run_simulation, compute_rel_abundance
 bbtools_loc = os.path.abspath("../utils/bbmap")
-
-
-
 
 
 def main():

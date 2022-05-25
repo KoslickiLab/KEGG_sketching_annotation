@@ -76,3 +76,4 @@ def make_sketches(ksize, scale_factor, file_name, sketch_type, out_dir, per_reco
 
 # TODO: make a sourmash gather helper function
 # TODO: make binary metric measures
+# TODO: check the relative abundance calculator, since I don't think it's accurate. Note Acav_1280
