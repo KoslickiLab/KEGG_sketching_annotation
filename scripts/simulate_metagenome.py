@@ -23,7 +23,7 @@ def run_simulation(reference_file, out_file, num_reads, len_reads, noisy=False):
     #cmd += f"metagenome={metagenome} "
     if noisy:
         # TODO: hard code these for now, look up realistic values later
-        snprate = .51
+        snprate = .01
         insrate = .01
         delrate = .01
         subrate = .01
@@ -31,6 +31,7 @@ def run_simulation(reference_file, out_file, num_reads, len_reads, noisy=False):
         cmd += f"snprate={snprate} insrate={insrate} delrate={delrate} subrate={subrate} nrate={nrate} "
     cmd += f"ref={reference_file} out={out_file} reads={num_reads} length={len_reads} "
     subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+    return
 
 
 def compute_rel_abundance(simulation_fq_file):
@@ -44,8 +45,9 @@ def compute_rel_abundance(simulation_fq_file):
     contents = open(simulation_fq_file, 'r').read()
     matches = re.findall(regex, contents)
     matches_tally = Counter(matches)
-    print(f"I found {len(matches_tally)} unique matches totalling {np.sum(list(matches_tally.values()))} total matches")
-
+    print(f"I found {len(matches_tally)} unique matches totalling {np.sum(list(matches_tally.values()))} total matches "
+          f"with the most frequent one occurring {np.max(list(matches_tally.values()))} times")
+    return matches_tally
 
 def main():
     parser = argparse.ArgumentParser(description="This script uses BBTools randomreads.sh to simulate reads from a"
@@ -71,6 +73,13 @@ def main():
     # For some really odd reason, some (but not all) of the underscores in the names are converted to left brackets {
     # So let's replace them back
     subprocess.run("sed -i 's/{/_/g' " + out_file, stdout=subprocess.PIPE, shell=True)
+    matches_tally = compute_rel_abundance(out_file)
+    # Save this for later use
+    # Sort it first, descending order
+    matches_tally_sorted = {k: v for k, v in sorted(matches_tally.items(), key=lambda item: -item[1])}
+    with open(f"{out_file}.abund", 'w') as fid:
+        for key, value in matches_tally_sorted.items():
+            fid.write(f"{key}\t{value}\n")
 
 
 
