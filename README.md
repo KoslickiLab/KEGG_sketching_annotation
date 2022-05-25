@@ -28,3 +28,8 @@ Using the following query data (in increasing level of realism):
 3. Full simulated metagenomes (AA+prodigal/AA+6-frame-translation/NT)
 4. Mock metagenomes
 5. Real metagenomes that have been extensively analyzed previously
+
+## Order of scripts to run
+
+1. `make_sketches.py` This will take the FAA and FNA files and create sketches/signatures
+for each one.
