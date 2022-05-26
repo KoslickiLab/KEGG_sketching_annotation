@@ -41,3 +41,14 @@ Using the following query data (in increasing level of realism):
 for each one.
 2. `simulate_metagenome.py` simulates a metagenome when provided with a reference database. This will need some work since currently bbtools uses the _whole_ database to simulate a metagenome (i.e. coverage is very low), so we'll need to do some down-sampling. This will also create a ground-truth functional profile (though that needs to be checked for accuracy).
 3. `classify_and_report.py` is intended to run sourmash gather, parse the results, and then compare this to the ground truth.
+
+
+## Classification results
+Running the following will print out binary classification results:
+```commandline
+./classify_and_report.py -r ../test_data/input/kegg_genes_KO.fna -m ../test_data/output/test_simulation.fq -o ../test_data/output/ -k 21 -t 100 -n 1000 --ref_scale_size 100 --query_scale_size 100
+```
+which will result in something like:
+```commandline
+{'TP': 493, 'FP': 3, 'FN': 158, 'precision': 0.9939516129032258, 'recall': 0.7572964669738863, 'F1': 0.8596338273757629}
+```
