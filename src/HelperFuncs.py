@@ -112,6 +112,10 @@ def run_sourmash_gather(query, database, out_file, sketch_type, num_results=None
     return
 
 
+def parse_gather(gather_out_file):
+    return
+
+
 
 
 # TODO: make a sourmash gather helper function

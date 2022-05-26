@@ -1,13 +1,17 @@
 #!/usr/bin/env python
 import argparse
-import os
+import os, sys
 from os import listdir
 from os.path import isfile, join
 import subprocess
 import re
 import numpy as np
 from collections import Counter
-from ..src.HelperFuncs import run_simulation, compute_rel_abundance
+# for relative imports
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(SCRIPT_DIR))
+from src.HelperFuncs import run_simulation, compute_rel_abundance
+
 bbtools_loc = os.path.abspath("../utils/bbmap")
 
 
@@ -18,17 +22,21 @@ def main():
     parser.add_argument('-r', '--reference_file', type=str, help="Database that you want to generate reads from.")
     parser.add_argument('-o', '--out_file', type=str, help="The output simulated metagenome.")
     parser.add_argument('-n', '--num_reads', type=int, help="The number of reads to simulate.")
-    parser.add_argument('-l', '--len_reads', type=int, help="The length of the reads to generate.")
+    parser.add_argument('-l', '--len_reads', type=int, help="The length of the reads to generate.", default=150)
     parser.add_argument("--noisy", action='store_true', help="If you want to inject noise in the simulated reads")
     # parse the args
     args = parser.parse_args()
-    reference_file = args.reference_file
-    out_file = args.out_file
+    reference_file = os.path.abspath(args.reference_file)
+    out_file = os.path.abspath(args.out_file)
     ext = out_file.split(".")[-1]
     if ext not in ["fq", "fastq"]:
         raise Exception(f"Output file extension must be one of fq or fastq. Yours was {ext}")
     num_reads = args.num_reads
+    if not num_reads:
+        raise Exception("Must specify the number of reads via --num_reads")
     len_reads = args.len_reads
+    if not len_reads:
+        raise Exception("Must specify the length of the reads via --len_reads")
     noisy = args.noisy
     # run the simulation
     run_simulation(reference_file, out_file, num_reads, len_reads, noisy=noisy)
