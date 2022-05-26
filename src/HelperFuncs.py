@@ -4,6 +4,7 @@ import re
 from collections import Counter
 import numpy as np
 import pandas as pd
+import pathlib
 
 bbtools_loc = os.path.abspath("../utils/bbmap")
 
@@ -36,7 +37,9 @@ def run_simulation(reference_file, out_file, num_reads, len_reads=150, noisy=Fal
         nrate = .01
         cmd += f"snprate={snprate} insrate={insrate} delrate={delrate} subrate={subrate} nrate={nrate} "
     cmd += f"ref={reference_file} out={out_file} reads={num_reads} length={len_reads} "
-    subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+    if res.returncode != 0:
+        raise Exception(f"The command {cmd} exited with nonzero exit code {res.returncode}")
     return
 
 
@@ -62,7 +65,7 @@ def make_sketches(ksize, scale_factor, file_name, sketch_type, out_dir, per_reco
     :param ksize: the k-size to use
     :param scale_factor: the denominator of the scale factor to use (so >=1)
     :param file_name: the file to sketch
-    :param sketch_type: amino acid (aa) or nucleotide (nt)
+    :param sketch_type: amino acid (aa, protein) or nucleotide (nt, dna)
     :param out_dir: Where to write the signature
     :param per_record: If you want sketches of each entry in the fasta file, or just of the full fasta file (default: False)
     :return: None
@@ -70,9 +73,9 @@ def make_sketches(ksize, scale_factor, file_name, sketch_type, out_dir, per_reco
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     out_file = f"{os.path.join(out_dir, os.path.basename(file_name))}_k_{ksize}_scale_{scale_factor}.sig"
-    if sketch_type == 'aa':
+    if sketch_type == 'aa' or sketch_type == 'protein':
         sketch_type = "protein"
-    elif sketch_type == 'nt':
+    elif sketch_type == 'nt' or sketch_type == 'dna':
         sketch_type = "dna"
     else:
         raise Exception(f"Sketch_type must be one of 'aa' or 'nt. I was given {sketch_type}")
@@ -80,11 +83,14 @@ def make_sketches(ksize, scale_factor, file_name, sketch_type, out_dir, per_reco
         cmd = f"sourmash sketch {sketch_type} -p k={ksize},scaled={scale_factor},abund -o {out_file} --singleton {file_name}"
     else:
         cmd = f"sourmash sketch {sketch_type} -p k={ksize},scaled={scale_factor},abund -o {out_file} {file_name}"
-    subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+    print(cmd)
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+    if res.returncode != 0:
+        raise Exception(f"The command {cmd} exited with nonzero exit code {res.returncode}")
     return
 
 
-def run_sourmash_gather(query, database, out_file, sketch_type, num_results=None, threshold_bp=1000):
+def run_sourmash_gather(query, database, out_file, sketch_type, num_results=None, threshold_bp=1000, quiet=True):
     """
     This is a simple wrapper for sourmash gather. It is hard coded to ignore abundances, estimate the
     ani and ci, as well as not perform the prefetch steps.
@@ -116,8 +122,12 @@ def run_sourmash_gather(query, database, out_file, sketch_type, num_results=None
         cmd += f"--num-results {num_results} "
     if threshold_bp:
         cmd += f"--threshold-bp {threshold_bp} "
+    if quiet:
+        cmd += "-q "
     cmd += f"{query} {database}"
-    subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+    if res.returncode != 0:
+        raise Exception(f"The command {cmd} exited with nonzero exit code {res.returncode}")
     return
 
 
@@ -136,20 +146,33 @@ def return_unique_gather_hits(gather_out_file):
     return list(name_ids_unique)
 
 
-def cal_binary_stats(simulation_fq_file, gather_out_file):
+def calc_binary_stats(simulation_file, gather_out_file):
     """
     This function takes the simulation fastq file and the gather csv out file and calculates
-    binary statistics from it: a dict with keys TP, FP, FN, precision, recall, F1
-    :param simulation_fq_file: Fastq file that contains the simulated reads
+    binary statistics from it: a dict with keys TP, FP, FN, precision, recall, F1.
+    If you provide it a *.abund file, it just reads it as is
+    :param simulation_file: Fastq file that contains the simulated reads, or relative abundances already
     :param gather_out_file: the results of running sourmash gather on those simulated reads
     :return: dict
     """
-    simulation_gene_ids = set(compute_rel_abundance(simulation_fq_file).keys())
+    # If the gt results are precomputed, just read them in
+    simulation_gene_ids = set()
+    ext = pathlib.Path(simulation_file).suffix
+    # If the abund was passed, just read it in
+    if ext == '.abund':
+        with open(f"{simulation_file}", 'r') as fid:
+            for line in fid.readlines():
+                ident, count = line.strip().split('\t')
+                simulation_gene_ids.add(ident)
+    elif ext == '.fq':
+        simulation_gene_ids = set(compute_rel_abundance(simulation_file).keys())
+    else:
+        raise Exception(f"Unknown file extension {ext}. Must be either fq or abund")
     gather_gene_ids = set(return_unique_gather_hits(gather_out_file))
     stats = dict()
-    stats['TP'] = gather_gene_ids.intersection(simulation_gene_ids)
-    stats['FP'] = gather_gene_ids.difference(simulation_gene_ids)
-    stats['FN'] = simulation_gene_ids.difference(gather_gene_ids)
+    stats['TP'] = len(gather_gene_ids.intersection(simulation_gene_ids))
+    stats['FP'] = len(gather_gene_ids.difference(simulation_gene_ids))
+    stats['FN'] = len(simulation_gene_ids.difference(gather_gene_ids))
     stats['precision'] = stats['TP'] / float(stats['TP'] + stats['FP'])
     stats['recall'] = stats['TP'] / float(stats['TP'] + stats['FN'])
     stats['F1'] = 2 * stats['precision'] * stats['recall'] / float(stats['precision'] + stats['recall'])
@@ -162,11 +185,11 @@ def check_extension(file_name):
     :param file_name: file name to check
     :return: 'protein' or 'dna'
     """
-    prefix, suffix = file_name.strip().split(".")
+    suffix = pathlib.Path(file_name).suffix
     sketch_type = ""
-    if suffix == "fna":
+    if suffix == ".fna":
         sketch_type = "dna"
-    elif suffix == "faa":
+    elif suffix == ".faa":
         sketch_type = "protein"
     else:
         raise Exception(f"Unknown extension {suffix}.")

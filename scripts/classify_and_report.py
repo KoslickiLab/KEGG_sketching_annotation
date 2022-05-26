@@ -3,6 +3,7 @@ import argparse
 import os
 import sys
 from os.path import exists
+import pathlib
 from os import listdir
 from os.path import isfile, join
 import subprocess
@@ -13,7 +14,7 @@ import warnings
 # for relative imports
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
-from src.HelperFuncs import make_sketches, run_simulation, compute_rel_abundance, run_sourmash_gather, check_extension
+from src.HelperFuncs import make_sketches, compute_rel_abundance, run_sourmash_gather, check_extension, calc_binary_stats
 
 
 def main():
@@ -54,20 +55,20 @@ def main():
     if ref_scale < 1 or query_scale < 1:
         raise Exception(f"Scale sizes must be greater than or equal to one. You provided: {ref_scale} and {query_scale}")
     # check if the reference file sketch with the right params exists
-    ref_sketch_file = os.path.join(out_dir, f"{reference_file}_k_{ksize}_scale_{ref_scale}.sig")
+    ref_sketch_file = os.path.join(out_dir, os.path.basename(f"{reference_file}_k_{ksize}_scale_{ref_scale}.sig"))
     if not exists(ref_sketch_file):
         warnings.warn(f"Sketch file {ref_sketch_file}.sig does not exist, creating it now.")
         sketch_type = check_extension(reference_file)
         make_sketches(ksize, ref_scale, reference_file, sketch_type, out_dir, per_record=True)
     # check if the query file sketch with the right params exists
-    query_sketch_file = os.path.join(out_dir, f"{metagenome_file}_k_{ksize}_scale_{query_scale}.sig")
+    query_sketch_file = f"{metagenome_file}_k_{ksize}_scale_{query_scale}.sig"
     if not exists(query_sketch_file):
         warnings.warn(f"Sketch file {query_sketch_file} does not exist, creating it now.")
         make_sketches(ksize, query_scale, metagenome_file, sketch_type, out_dir, per_record=False)
     # check if the abundances have been calculated from the simulation
-    rel_abund_file = exists(os.path.join(out_dir, f"{metagenome_file}.abund"))
+    rel_abund_file = f"{metagenome_file}.abund"
     gt_rel_abund = Counter()
-    if not rel_abund_file:
+    if not exists(rel_abund_file):
         gt_rel_abund = compute_rel_abundance(metagenome_file)
     # otherwise read it in
     else:
@@ -76,10 +77,16 @@ def main():
                 id, count = line.strip().split('\t')
                 gt_rel_abund[id] = count
     # Then run sourmash gather
-    out_file = os.path.join(out_dir, f"{query_sketch_file}_{ref_sketch_file}_gather.csv")
-    run_sourmash_gather(query_sketch_file, ref_sketch_file, out_file, sketch_type, num_results=num_res, threshold_bp=threshold_bp)
-
+    gather_out_file = os.path.join(out_dir, f"{os.path.basename(query_sketch_file)}_{os.path.basename(ref_sketch_file)}_gather.csv")
+    run_sourmash_gather(query_sketch_file, ref_sketch_file, gather_out_file, sketch_type, num_results=num_res, threshold_bp=threshold_bp)
+    # And calculate the results
+    print(rel_abund_file)
+    print(gather_out_file)
+    stats = calc_binary_stats(rel_abund_file, gather_out_file)
+    print(stats)
 
 
 if __name__ == "__main__":
+    # Example of running it as a script from the script dir:
+    # ./classify_and_report.py -r ../test_data/input/kegg_genes_KO.fna -m ../test_data/output/test_simulation.fq -o ../test_data/output/ -k 21 -t 100 -n 100 --ref_scale_size 100 --query_scale_size 100
     main()

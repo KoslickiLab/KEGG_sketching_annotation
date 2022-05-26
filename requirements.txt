@@ -1,5 +1,5 @@
 pandas
-sourmash
+sourmash>=4.4.0
 pandas
 biopython
 numpy
