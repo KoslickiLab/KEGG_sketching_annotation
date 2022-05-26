@@ -7,7 +7,7 @@ from os.path import isfile, join
 # for relative imports
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
-from src.HelperFuncs import make_sketches
+from src.HelperFuncs import make_sketches, check_extension
 
 
 def main():
@@ -51,14 +51,7 @@ def main():
                                 f"know if this is a nucleotide sequence or amino acid sequence.")
         # Now actually do the sketching
         for file_name in file_names:
-            prefix, suffix = file_name.strip().split(".")
-            sketch_type = ""
-            if suffix == "fna":
-                sketch_type = "dna"
-            elif suffix == "faa":
-                sketch_type = "protein"
-            else:
-                raise Exception(f"Unknown extension {suffix}.")
+            sketch_type = check_extension(file_name)
             print(f"Sketching the entries in the file {file_name}")
             make_sketches(ksize, scale_factor, file_name, sketch_type, out_dir, per_record=True)
     # Otherwise you specified a single file, so sketch just that one

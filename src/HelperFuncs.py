@@ -99,8 +99,8 @@ def run_sourmash_gather(query, database, out_file, sketch_type, num_results=None
     ignore_abundance = True
     estimate_ani_ci = True
     no_prefetch = True
-    if sketch_type not in ['aa', 'nt']:
-        raise Exception(f"sketch type must be one of aa (amino acid) or nt (nucleotide). Provided value was {sketch_type}")
+    if sketch_type not in ['aa', 'nt', 'protein', 'dna']:
+        raise Exception(f"sketch type must be one of aa or protein (amino acid) or nt or dna (nucleotide). Provided value was {sketch_type}")
     cmd = f"sourmash gather -o {out_file} "
     if ignore_abundance:
         cmd += "--ignore-abundance "
@@ -108,9 +108,9 @@ def run_sourmash_gather(query, database, out_file, sketch_type, num_results=None
         cmd += "--estimate-ani-ci "
     if no_prefetch:
         cmd += "--no-prefetch "
-    if sketch_type == 'aa':
+    if sketch_type == 'aa' or sketch_type == 'protein':
         cmd += "--protein "
-    elif sketch_type == 'nt':
+    elif sketch_type == 'nt' or sketch_type == 'dna':
         cmd += "--dna "
     if num_results:
         cmd += f"--num-results {num_results} "
@@ -154,6 +154,23 @@ def cal_binary_stats(simulation_fq_file, gather_out_file):
     stats['recall'] = stats['TP'] / float(stats['TP'] + stats['FN'])
     stats['F1'] = 2 * stats['precision'] * stats['recall'] / float(stats['precision'] + stats['recall'])
     return stats
+
+
+def check_extension(file_name):
+    """
+    Checks the file extension to see if it's protein or dna
+    :param file_name: file name to check
+    :return: 'protein' or 'dna'
+    """
+    prefix, suffix = file_name.strip().split(".")
+    sketch_type = ""
+    if suffix == "fna":
+        sketch_type = "dna"
+    elif suffix == "faa":
+        sketch_type = "protein"
+    else:
+        raise Exception(f"Unknown extension {suffix}.")
+    return sketch_type
 
 # TODO: check the relative abundance calculator, since I don't think it's accurate. Note Acav_1280
 # TODO: calculate weighted stats. Need to understand what the difference columns in the sourmash gather results are actually returning
