@@ -155,6 +155,5 @@ def cal_binary_stats(simulation_fq_file, gather_out_file):
     stats['F1'] = 2 * stats['precision'] * stats['recall'] / float(stats['precision'] + stats['recall'])
     return stats
 
-
-# TODO: make binary metric measures
 # TODO: check the relative abundance calculator, since I don't think it's accurate. Note Acav_1280
+# TODO: calculate weighted stats. Need to understand what the difference columns in the sourmash gather results are actually returning

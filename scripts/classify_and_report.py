@@ -46,8 +46,5 @@ def main():
     # TODO: then run sourmash gather, save the results, and compute binary metrics using the results
 
 
-
-
-
 if __name__ == "__main__":
     main()
