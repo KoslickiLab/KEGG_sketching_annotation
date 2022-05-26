@@ -32,10 +32,18 @@ def main():
     parser.add_argument('--query_scale_size', type=int, help="The scale factor to use for the query: "
                                                            "s is an integer >=1 and is the denominator of the fraction of sketches to keep.")
     parser.add_argument('--query_protein', action='store_true', help="Flag indicating that the query is protein. Otherwise assume DNA.")
+    parser.add_argument('--query_translate', action='store_true',
+                        help="Flag indicating that the query is DNA, but should be translated to protein.")
+    parser.add_argument('--reuse_query_sketch', action='store_true',
+                        help="Flag saying the the simulation/query has not changed, so do not update it")
     # parse the args
     args = parser.parse_args()
     query_is_protein = args.query_protein
+    query_translate = args.query_translate
+    if query_translate and query_is_protein:
+        raise Exception("The flags --query_is_protein and --query_translate are mutually exclusive")
     reference_file = args.reference_file
+    reuse_query_sketch = args.reuse_query_sketch
     metagenome_file = args.metagenome
     out_dir = args.out_dir
     ksize = args.kmer_size
@@ -44,9 +52,11 @@ def main():
     threshold_bp = args.threshold_bp
     num_res = args.num_results
     if query_is_protein:
-        sketch_type = 'protein'
+        query_sketch_type = 'protein'
     else:
-        sketch_type = 'dna'
+        query_sketch_type = 'dna'
+    if query_translate:
+        query_sketch_type = 'translate'
     # check args
     if not exists(out_dir):
         os.makedirs(out_dir)
@@ -62,9 +72,10 @@ def main():
         make_sketches(ksize, ref_scale, reference_file, sketch_type, out_dir, per_record=True)
     # check if the query file sketch with the right params exists
     query_sketch_file = f"{metagenome_file}_k_{ksize}_scale_{query_scale}.sig"
-    if not exists(query_sketch_file):
-        warnings.warn(f"Sketch file {query_sketch_file} does not exist, creating it now.")
-        make_sketches(ksize, query_scale, metagenome_file, sketch_type, out_dir, per_record=False)
+    #if not exists(query_sketch_file):
+    #warnings.warn(f"Sketch file {query_sketch_file} does not exist, creating it now.")
+    if not reuse_query_sketch:
+        make_sketches(ksize, query_scale, metagenome_file, query_sketch_type, out_dir, per_record=False)
     # check if the abundances have been calculated from the simulation
     rel_abund_file = f"{metagenome_file}.abund"
     gt_rel_abund = Counter()
@@ -78,7 +89,12 @@ def main():
                 gt_rel_abund[id] = count
     # Then run sourmash gather
     gather_out_file = os.path.join(out_dir, f"{os.path.basename(query_sketch_file)}_{os.path.basename(ref_sketch_file)}_gather.csv")
-    run_sourmash_gather(query_sketch_file, ref_sketch_file, gather_out_file, sketch_type, num_results=num_res, threshold_bp=threshold_bp)
+    if query_translate:
+        run_sourmash_gather(query_sketch_file, ref_sketch_file, gather_out_file, 'protein', num_results=num_res,
+                            threshold_bp=threshold_bp, quiet=False)
+    else:
+        run_sourmash_gather(query_sketch_file, ref_sketch_file, gather_out_file, query_sketch_type, num_results=num_res,
+                            threshold_bp=threshold_bp, quiet=False)
     # And calculate the results
     stats = calc_binary_stats(rel_abund_file, gather_out_file)
     print(stats)

@@ -23,9 +23,10 @@ def run_simulation(reference_file, out_file, num_reads, len_reads=150, noisy=Fal
     """
     # First subsample the database so there are only num_orgs in the new reference file
     with tempfile.NamedTemporaryFile(suffix=pathlib.Path(reference_file).suffix) as subsample_ref_file:
+    #with open('/tmp/test.faa', 'w') as subsample_ref_file:
         # do the subsampling
         cmd = f"{bbtools_loc}/./reformat.sh in={reference_file} out={subsample_ref_file.name} ow=t " \
-              f"samplereadstarget={num_orgs}"
+              f"samplereadstarget={num_orgs} ignorejunk=t iupacToN=f crashjunk=f fixjunk=f"
         res = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
         if res.returncode != 0:
             raise Exception(f"The command {cmd} exited with nonzero exit code {res.returncode}")
@@ -87,12 +88,13 @@ def make_sketches(ksize, scale_factor, file_name, sketch_type, out_dir, per_reco
         sketch_type = "protein"
     elif sketch_type == 'nt' or sketch_type == 'dna':
         sketch_type = "dna"
-    else:
-        raise Exception(f"Sketch_type must be one of 'aa' or 'nt. I was given {sketch_type}")
+    # Don't include this last line so we can work with translated DNA->Protein as well
+    #else:
+    #    raise Exception(f"Sketch_type must be one of 'aa' or 'nt. I was given {sketch_type}")
     if per_record:
-        cmd = f"sourmash sketch {sketch_type} -p k={ksize},scaled={scale_factor},abund -o {out_file} --singleton {file_name}"
+        cmd = f"sourmash sketch {sketch_type} -f -p k={ksize},scaled={scale_factor},abund -o {out_file} --singleton {file_name}"
     else:
-        cmd = f"sourmash sketch {sketch_type} -p k={ksize},scaled={scale_factor},abund -o {out_file} {file_name}"
+        cmd = f"sourmash sketch {sketch_type} -f -p k={ksize},scaled={scale_factor},abund -o {out_file} {file_name}"
     res = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
     if res.returncode != 0:
         raise Exception(f"The command {cmd} exited with nonzero exit code {res.returncode}")
@@ -184,7 +186,10 @@ def calc_binary_stats(simulation_file, gather_out_file):
     stats['FN'] = len(simulation_gene_ids.difference(gather_gene_ids))
     stats['precision'] = stats['TP'] / float(stats['TP'] + stats['FP'])
     stats['recall'] = stats['TP'] / float(stats['TP'] + stats['FN'])
-    stats['F1'] = 2 * stats['precision'] * stats['recall'] / float(stats['precision'] + stats['recall'])
+    if stats['TP']:
+        stats['F1'] = 2 * stats['precision'] * stats['recall'] / float(stats['precision'] + stats['recall'])
+    else:
+        stats['F1'] = 0
     return stats
 
 
