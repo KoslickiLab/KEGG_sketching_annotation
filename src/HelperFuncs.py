@@ -136,8 +136,25 @@ def return_unique_gather_hits(gather_out_file):
     return list(name_ids_unique)
 
 
+def cal_binary_stats(simulation_fq_file, gather_out_file):
+    """
+    This function takes the simulation fastq file and the gather csv out file and calculates
+    binary statistics from it: a dict with keys TP, FP, FN, precision, recall, F1
+    :param simulation_fq_file: Fastq file that contains the simulated reads
+    :param gather_out_file: the results of running sourmash gather on those simulated reads
+    :return: dict
+    """
+    simulation_gene_ids = set(compute_rel_abundance(simulation_fq_file).keys())
+    gather_gene_ids = set(return_unique_gather_hits(gather_out_file))
+    stats = dict()
+    stats['TP'] = gather_gene_ids.intersection(simulation_gene_ids)
+    stats['FP'] = gather_gene_ids.difference(simulation_gene_ids)
+    stats['FN'] = simulation_gene_ids.difference(gather_gene_ids)
+    stats['precision'] = stats['TP'] / float(stats['TP'] + stats['FP'])
+    stats['recall'] = stats['TP'] / float(stats['TP'] + stats['FN'])
+    stats['F1'] = 2 * stats['precision'] * stats['recall'] / float(stats['precision'] + stats['recall'])
+    return stats
 
 
-# TODO: make a sourmash gather helper function
 # TODO: make binary metric measures
 # TODO: check the relative abundance calculator, since I don't think it's accurate. Note Acav_1280
