@@ -72,6 +72,46 @@ def make_sketches(ksize, scale_factor, file_name, sketch_type, out_dir, per_reco
     else:
         cmd = f"sourmash sketch {sketch_type} -p k={ksize},scaled={scale_factor},abund -o {out_file} --singleton {file_name}"
     subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+    return
+
+
+def run_sourmash_gather(query, database, out_file, sketch_type, num_results=None, threshold_bp=1000):
+    """
+    This is a simple wrapper for sourmash gather. It is hard coded to ignore abundances, estimate the
+    ani and ci, as well as not perform the prefetch steps.
+    :param query: file containing the query sketch/signature
+    :param database: file containing the database sketch/signature
+    :param out_file: the output csv file with the results
+    :param sketch_type: aa (for amino acid) or nt (for nucleotide)
+    :param num_results: int, if you only want the top N results
+    :param threshold_bp: int, stop the algorithm once the overlap is below this many base pairs
+    :return:
+    """
+    ignore_abundance = True
+    estimate_ani_ci = True
+    no_prefetch = True
+    if sketch_type not in ['aa', 'nt']:
+        raise Exception(f"sketch type must be one of aa (amino acid) or nt (nucleotide). Provided value was {sketch_type}")
+    cmd = f"sourmash gather -o {out_file} "
+    if ignore_abundance:
+        cmd += "--ignore-abundance "
+    if estimate_ani_ci:
+        cmd += "--estimate-ani-ci "
+    if no_prefetch:
+        cmd += "--no-prefetch "
+    if sketch_type == 'aa':
+        cmd += "--protein "
+    elif sketch_type == 'nt':
+        cmd += "--dna "
+    if num_results:
+        cmd += f"--num-results {num_results} "
+    if threshold_bp:
+        cmd += f"--threshold-bp {threshold_bp} "
+    cmd += f"{query} {database}"
+    subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+    return
+
+
 
 
 # TODO: make a sourmash gather helper function

@@ -1,7 +1,5 @@
-tqdm
 pandas
 sourmash
 pandas
 biopython
-pytaxonkit
-bs4
+numpy
