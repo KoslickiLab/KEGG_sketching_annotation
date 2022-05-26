@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 import argparse
 import os
+import sys
 from os import listdir
 from os.path import isfile, join
-import subprocess
-from ..src.HelperFuncs import make_sketches
+# for relative imports
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(SCRIPT_DIR))
+from src.HelperFuncs import make_sketches
 
 def main():
     parser = argparse.ArgumentParser(description="This script creates training/reference sketches of KEGG. "

@@ -1,13 +1,17 @@
 #!/usr/bin/env python
 import argparse
 import os
+import sys
 from os import listdir
 from os.path import isfile, join
 import subprocess
 import re
 import numpy as np
 from collections import Counter
-from ..src.HelperFuncs import make_sketches, run_simulation, compute_rel_abundance
+# for relative imports
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(SCRIPT_DIR))
+from src.HelperFuncs import make_sketches, run_simulation, compute_rel_abundance
 
 
 def main():

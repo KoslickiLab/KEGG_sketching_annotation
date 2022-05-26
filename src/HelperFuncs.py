@@ -66,7 +66,15 @@ def make_sketches(ksize, scale_factor, file_name, sketch_type, out_dir, per_reco
     :param per_record: If you want sketches of each entry in the fasta file, or just of the full fasta file (default: False)
     :return: None
     """
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
     out_file = f"{os.path.join(out_dir, os.path.basename(file_name))}_k_{ksize}_scale_{scale_factor}.sig"
+    if sketch_type == 'aa':
+        sketch_type = "protein"
+    elif sketch_type == 'nt':
+        sketch_type = "dna"
+    else:
+        raise Exception(f"Sketch_type must be one of 'aa' or 'nt. I was given {sketch_type}")
     if per_record:
         cmd = f"sourmash sketch {sketch_type} -p k={ksize},scaled={scale_factor},abund -o {out_file} --singleton {file_name}"
     else:

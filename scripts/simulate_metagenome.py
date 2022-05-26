@@ -1,12 +1,8 @@
 #!/usr/bin/env python
 import argparse
-import os, sys
-from os import listdir
-from os.path import isfile, join
+import os
+import sys
 import subprocess
-import re
-import numpy as np
-from collections import Counter
 # for relative imports
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
