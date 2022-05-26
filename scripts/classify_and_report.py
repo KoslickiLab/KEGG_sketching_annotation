@@ -57,7 +57,7 @@ def main():
     # check if the reference file sketch with the right params exists
     ref_sketch_file = os.path.join(out_dir, os.path.basename(f"{reference_file}_k_{ksize}_scale_{ref_scale}.sig"))
     if not exists(ref_sketch_file):
-        warnings.warn(f"Sketch file {ref_sketch_file}.sig does not exist, creating it now.")
+        warnings.warn(f"Sketch file {ref_sketch_file} does not exist, creating it now.")
         sketch_type = check_extension(reference_file)
         make_sketches(ksize, ref_scale, reference_file, sketch_type, out_dir, per_record=True)
     # check if the query file sketch with the right params exists
@@ -80,8 +80,6 @@ def main():
     gather_out_file = os.path.join(out_dir, f"{os.path.basename(query_sketch_file)}_{os.path.basename(ref_sketch_file)}_gather.csv")
     run_sourmash_gather(query_sketch_file, ref_sketch_file, gather_out_file, sketch_type, num_results=num_res, threshold_bp=threshold_bp)
     # And calculate the results
-    print(rel_abund_file)
-    print(gather_out_file)
     stats = calc_binary_stats(rel_abund_file, gather_out_file)
     print(stats)
 

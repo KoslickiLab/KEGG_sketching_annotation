@@ -19,9 +19,11 @@ def main():
     parser.add_argument('-o', '--out_file', type=str, help="The output simulated metagenome.")
     parser.add_argument('-n', '--num_reads', type=int, help="The number of reads to simulate.")
     parser.add_argument('-l', '--len_reads', type=int, help="The length of the reads to generate.", default=150)
+    parser.add_argument('--num_orgs', type=int, help="The number of organisms/genes/proteins to include in the simulation.", default=250)
     parser.add_argument("--noisy", action='store_true', help="If you want to inject noise in the simulated reads")
     # parse the args
     args = parser.parse_args()
+    num_orgs = args.num_orgs
     reference_file = os.path.abspath(args.reference_file)
     out_file = os.path.abspath(args.out_file)
     ext = out_file.split(".")[-1]
@@ -35,7 +37,7 @@ def main():
         raise Exception("Must specify the length of the reads via --len_reads")
     noisy = args.noisy
     # run the simulation
-    run_simulation(reference_file, out_file, num_reads, len_reads, noisy=noisy)
+    run_simulation(reference_file, out_file, num_reads, len_reads, noisy=noisy, num_orgs=num_orgs)
     # For some really odd reason, some (but not all) of the underscores in the names are converted to left brackets {
     # So let's replace them back
     subprocess.run("sed -i 's/{/_/g' " + out_file, stdout=subprocess.PIPE, shell=True)
@@ -48,7 +50,8 @@ def main():
             fid.write(f"{key}\t{value}\n")
 
 
-
 if __name__ == "__main__":
+    # Example of running this script
+    # ./simulate_metagenome.py -r ../test_data/input/kegg_genes_KO.fna -o ../test_data/output/test_simulation.fq -n 1000 -l 150 --num_orgs 10
     main()
 

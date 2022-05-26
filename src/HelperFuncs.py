@@ -5,11 +5,12 @@ from collections import Counter
 import numpy as np
 import pandas as pd
 import pathlib
+import tempfile
 
 bbtools_loc = os.path.abspath("../utils/bbmap")
 
 
-def run_simulation(reference_file, out_file, num_reads, len_reads=150, noisy=False):
+def run_simulation(reference_file, out_file, num_reads, len_reads=150, noisy=False, num_orgs=250):
     """
     This function runs a simulation using bbtools "randomreads.sh"
     :param reference_file: The input sequences from which to make a metagenome TODO: make this auto downsample since currently it uses the whole set
@@ -17,29 +18,38 @@ def run_simulation(reference_file, out_file, num_reads, len_reads=150, noisy=Fal
     :param num_reads: number of reads to simulate
     :param len_reads: how long the reads are (default is 150bp)
     :param noisy: flag if you want noise injected to the simulation
+    :param num_orgs: specify the number of organisms/genes/proteins/etc. to include in the simulation
     :return:
     """
-    cmd = f"{bbtools_loc}/./randomreads.sh "
-    # Things we always want set to true
-    simple_names = "t"
-    illumina_names = "f"
-    overwrite = "t"
-    metagenome = "t"
-    # Note: reads by default are exactly 150bp long, not paired
-    cmd += f"simplenames={simple_names} overwrite={overwrite} illuminanames={illumina_names} metagenome={metagenome} "
-    #cmd += f"metagenome={metagenome} "
-    if noisy:
-        # TODO: hard code these for now, look up realistic values later
-        snprate = .01
-        insrate = .01
-        delrate = .01
-        subrate = .01
-        nrate = .01
-        cmd += f"snprate={snprate} insrate={insrate} delrate={delrate} subrate={subrate} nrate={nrate} "
-    cmd += f"ref={reference_file} out={out_file} reads={num_reads} length={len_reads} "
-    res = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
-    if res.returncode != 0:
-        raise Exception(f"The command {cmd} exited with nonzero exit code {res.returncode}")
+    # First subsample the database so there are only num_orgs in the new reference file
+    with tempfile.NamedTemporaryFile(suffix=pathlib.Path(reference_file).suffix) as subsample_ref_file:
+        # do the subsampling
+        cmd = f"{bbtools_loc}/./reformat.sh in={reference_file} out={subsample_ref_file.name} ow=t " \
+              f"samplereadstarget={num_orgs}"
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+        if res.returncode != 0:
+            raise Exception(f"The command {cmd} exited with nonzero exit code {res.returncode}")
+        # then generate the metagenome
+        cmd = f"{bbtools_loc}/./randomreads.sh "
+        # Things we always want set to true
+        simple_names = "t"
+        illumina_names = "f"
+        overwrite = "t"
+        metagenome = "t"
+        # Note: reads by default are exactly 150bp long, not paired
+        cmd += f"simplenames={simple_names} overwrite={overwrite} illuminanames={illumina_names} metagenome={metagenome} "
+        if noisy:
+            # TODO: hard code these for now, look up realistic values later
+            snprate = .01
+            insrate = .01
+            delrate = .01
+            subrate = .01
+            nrate = .01
+            cmd += f"snprate={snprate} insrate={insrate} delrate={delrate} subrate={subrate} nrate={nrate} "
+        cmd += f"ref={subsample_ref_file.name} out={out_file} reads={num_reads} length={len_reads} "
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+        if res.returncode != 0:
+            raise Exception(f"The command {cmd} exited with nonzero exit code {res.returncode}")
     return
 
 
@@ -83,7 +93,6 @@ def make_sketches(ksize, scale_factor, file_name, sketch_type, out_dir, per_reco
         cmd = f"sourmash sketch {sketch_type} -p k={ksize},scaled={scale_factor},abund -o {out_file} --singleton {file_name}"
     else:
         cmd = f"sourmash sketch {sketch_type} -p k={ksize},scaled={scale_factor},abund -o {out_file} {file_name}"
-    print(cmd)
     res = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
     if res.returncode != 0:
         raise Exception(f"The command {cmd} exited with nonzero exit code {res.returncode}")
