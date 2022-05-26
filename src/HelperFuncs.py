@@ -3,6 +3,7 @@ import subprocess
 import re
 from collections import Counter
 import numpy as np
+import pandas as pd
 
 bbtools_loc = os.path.abspath("../utils/bbmap")
 
@@ -78,7 +79,7 @@ def make_sketches(ksize, scale_factor, file_name, sketch_type, out_dir, per_reco
     if per_record:
         cmd = f"sourmash sketch {sketch_type} -p k={ksize},scaled={scale_factor},abund -o {out_file} --singleton {file_name}"
     else:
-        cmd = f"sourmash sketch {sketch_type} -p k={ksize},scaled={scale_factor},abund -o {out_file} --singleton {file_name}"
+        cmd = f"sourmash sketch {sketch_type} -p k={ksize},scaled={scale_factor},abund -o {out_file} {file_name}"
     subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
     return
 
@@ -120,8 +121,19 @@ def run_sourmash_gather(query, database, out_file, sketch_type, num_results=None
     return
 
 
-def parse_gather(gather_out_file):
-    return
+def return_unique_gather_hits(gather_out_file):
+    """
+    Takes a sourmash gather csv and returns the unique hits/identifiers in it
+    :param gather_out_file: csv file from sourmash gather -o
+    :return: a list of unique gene identifiers
+    """
+    if not os.path.exists(gather_out_file):
+        raise Exception(f"File {gather_out_file} does not exist")
+    df = pd.read_csv(gather_out_file)
+    names = list(df['name'])
+    name_ids = [x.split('|')[0] for x in names]
+    name_ids_unique = set(name_ids)
+    return list(name_ids_unique)
 
 
 
