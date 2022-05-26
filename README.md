@@ -29,7 +29,15 @@ Using the following query data (in increasing level of realism):
 4. Mock metagenomes
 5. Real metagenomes that have been extensively analyzed previously
 
+## Structure of repo
+`src` contains the module with various helper functions, wrappers to sourmash, etc.
+`scripts` contains the scripts that perform various tasks (sketching, simulation, etc.)
+`utils` contains third party tools (in this case, bbtools) for things like making simulations.
+`test_data` contains a small portion of real KEGG data for rapid testing and development.
+
 ## Order of scripts to run
 
 1. `make_sketches.py` This will take the FAA and FNA files and create sketches/signatures
 for each one.
+2. `simulate_metagenome.py` simulates a metagenome when provided with a reference database. This will need some work since currently bbtools uses the _whole_ database to simulate a metagenome (i.e. coverage is very low), so we'll need to do some down-sampling. This will also create a ground-truth functional profile (though that needs to be checked for accuracy).
+3. `classify_and_report.py` is intended to run sourmash gather, parse the results, and then compare this to the ground truth.
