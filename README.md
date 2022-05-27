@@ -74,3 +74,13 @@ update_blastdb.pl --decompress --blastdb_version 5 swissprot
 ./diamond prepdb -d swissprot
 ./diamond blastp -d swissprot -q queries.fasta -o matches.tsv
 ```
+
+## Running DIAMOND and parsing the results
+After making the simulation, run via:
+```commandline
+ ./classify_and_report_diamond.py -r ../test_data/input/kegg_genes_KO.faa -m ../test_data/output/test_simulation.fq -o ../test_data/output/
+```
+And you should get a result like
+```commandline
+{'TP': 98, 'FP': 110, 'FN': 2, 'precision': 0.47115384615384615, 'recall': 0.98, 'F1': 0.6363636363636364, 'Percent correct alignments': 0.8630737190242755, 'Total number of alignments': 1156228, 'Total number of sequences': 1000000.0}
+```

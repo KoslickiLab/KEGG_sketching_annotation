@@ -35,7 +35,7 @@ def main():
     if not exists(metagenome_file):
         raise Exception(f"Input metagenome {metagenome_file} does not appear to exist")
     # Check if the reference database has been built, and build it if it hasn't
-    ref_db = os.path.join(out_dir, f"{reference_file}.dmnd")
+    ref_db = os.path.join(out_dir, os.path.basename(f"{reference_file}.dmnd"))
     if not exists(ref_db):
         warnings.warn(f"Diamond database {ref_db} does not appear to exist. Making it now. This may take some time.")
         build_diamond_db(reference_file, ref_db)
