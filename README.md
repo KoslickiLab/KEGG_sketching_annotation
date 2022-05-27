@@ -52,3 +52,25 @@ which will result in something like:
 ```commandline
 {'TP': 493, 'FP': 3, 'FN': 158, 'precision': 0.9939516129032258, 'recall': 0.7572964669738863, 'F1': 0.8596338273757629}
 ```
+
+# Comparison to DIAMOND
+DIAMOND is an alignment-based functional annotation software package that is widely used.
+Let's compare the sourmash/FracMinHash approach to DIAMOND. 
+
+## Install instructions
+Updated from [here](https://github.com/bbuchfink/diamond/wiki):
+```commandline
+# downloading the tool
+wget http://github.com/bbuchfink/diamond/releases/download/v2.0.15/diamond-linux64.tar.gz
+tar xzf diamond-linux64.tar.gz
+# creating a diamond-formatted database file
+./diamond makedb --in reference.fasta -d reference
+# running a search in blastp mode
+./diamond blastp -d reference -q queries.fasta -o matches.tsv
+# running a search in blastx mode
+./diamond blastx -d reference -q reads.fasta -o matches.tsv
+# downloading and using a BLAST database
+update_blastdb.pl --decompress --blastdb_version 5 swissprot
+./diamond prepdb -d swissprot
+./diamond blastp -d swissprot -q queries.fasta -o matches.tsv
+```
