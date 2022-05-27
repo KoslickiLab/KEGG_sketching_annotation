@@ -312,6 +312,10 @@ def calc_binary_stats_diamond(simulation_file, matches_file):
     else:
         stats['F1'] = 0
     stats['Percent correct alignments'] = n_correct_alignments / float(n_correct_alignments + n_incorrect_alignments)
+    stats['Total number of alignments'] = n_correct_alignments + n_incorrect_alignments
+    cmd = f"wc -l {simulation_file}"
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+    stats['Total number of sequences'] = int(res.stdout.split()[0]) / 4
     return stats
 
 

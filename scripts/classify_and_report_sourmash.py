@@ -102,5 +102,5 @@ def main():
 
 if __name__ == "__main__":
     # Example of running it as a script from the script dir:
-    # ./classify_and_report.py -r ../test_data/input/kegg_genes_KO.fna -m ../test_data/output/test_simulation.fq -o ../test_data/output/ -k 21 -t 100 -n 100 --ref_scale_size 100 --query_scale_size 100
+    # ./classify_and_report_sourmash.py -r ../test_data/input/kegg_genes_KO.fna -m ../test_data/output/test_simulation.fq -o ../test_data/output/ -k 21 -t 100 -n 100 --ref_scale_size 100 --query_scale_size 100
     main()
