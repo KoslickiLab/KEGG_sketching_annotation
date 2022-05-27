@@ -6,8 +6,11 @@ import numpy as np
 import pandas as pd
 import pathlib
 import tempfile
+from os.path import exists
+import multiprocessing
 
 bbtools_loc = os.path.abspath("../utils/bbmap")
+diamond_loc = os.path.abspath("../utils/")
 
 
 def run_simulation(reference_file, out_file, num_reads, len_reads=150, noisy=False, num_orgs=250):
@@ -157,7 +160,7 @@ def return_unique_gather_hits(gather_out_file):
     return list(name_ids_unique)
 
 
-def calc_binary_stats(simulation_file, gather_out_file):
+def calc_binary_stats_sourmash(simulation_file, gather_out_file):
     """
     This function takes the simulation fastq file and the gather csv out file and calculates
     binary statistics from it: a dict with keys TP, FP, FN, precision, recall, F1.
@@ -209,5 +212,109 @@ def check_extension(file_name):
         raise Exception(f"Unknown extension {suffix}.")
     return sketch_type
 
-# TODO: check the relative abundance calculator, since I don't think it's accurate. Note Acav_1280
+
+def build_diamond_db(input_file, output_database):
+    """
+    This function is a simple wrapper for DIAMOND to create a reference database from protein sequences
+    :param input_file: input reference FASTA file
+    :param output_database: output database file (in DIAMOND binary format)
+    :return: none
+    """
+    # DIAMOND will not automatically create folders
+    if not exists(os.path.dirname(output_database)):
+        os.makedirs(os.path.dirname(output_database))
+    cmd = f"{diamond_loc}/./diamond makedb --in {input_file} -d {output_database}"
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+    if res.returncode != 0:
+        raise Exception(f"The command {cmd} exited with nonzero exit code {res.returncode}")
+    return
+
+
+def run_diamond_blastx(query_file, database_file, out_file, num_threads=multiprocessing.cpu_count()):
+    """
+    This is a simple wrapper to take a metagenome/query file `query_file` that contains DNA sequences,
+    translate it to protein space, and then align against the database file.
+    :param query_file: Input FASTA/Q query file
+    :param database_file: The database built with build_diamond_db
+    :param out_file: The output tsv file. Format is:
+    qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore
+    :param num_threads: Number of threads to run (default=number of CPU cores on the machine you are using)
+    :return: none
+    """
+    cmd = f"{diamond_loc}/./diamond blastx -d {database_file} -q {query_file} -o {out_file} -p {num_threads}"
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
+    if res.returncode != 0:
+        raise Exception(f"The command {cmd} exited with nonzero exit code {res.returncode}")
+    return
+
+
+def parse_diamond_results(matches_file):
+    """
+    This parses the DIAMOND output csv file and returns some values about the results.
+    :param matches_file: the output csv file from DIAMOND
+    :return: 3-tuple: a) the set of gene identifiers that DIAMOND predicted to be in the sample
+    b) the number of correct alignments (diamond aligned the read to the correct reference sequence)
+    c) the number of incorrect alignments  (diamond aligned the read to the wrong reference sequence)
+    """
+    df = pd.read_csv(matches_file, sep='\t', header=0,
+                       names=["qseqid", "sseqid", "pident", "length", "mismatch", "gapopen", "qstart", "qend", "sstart",
+                              "send", "evalue", "bitscore"])
+    query_names = list(df['qseqid'])
+    regex = r'\_\.\_([a-z]{3}:[a-zA-Z]\w+)'
+    regexc = re.compile(regex)
+    query_ids = [re.findall(regexc, x)[0] for x in query_names]
+    ref_ids = [x.split('|')[0] for x in df['sseqid']]
+    if len(query_ids) != len(ref_ids):
+        raise Exception(f"Something went wrong: there are {len(query_ids)} query ids, but {len(ref_ids)} ref ids.")
+    inferred_ids = set()
+    n_correct_alignments = 0
+    n_incorrect_alignments = 0
+    for true_id, inf_id in zip(query_ids, ref_ids):
+        inferred_ids.add(inf_id)
+        if true_id == inf_id:
+            n_correct_alignments += 1
+        else:
+            n_incorrect_alignments += 1
+    return inferred_ids, n_correct_alignments, n_incorrect_alignments
+
+
+def calc_binary_stats_diamond(simulation_file, matches_file):
+    """
+    This calculates the binary statistics (from a pure "gene present/absent" perspective) for the performance of DIAMOND
+    on simulated data
+    :param simulation_file: the simulation fastq file on which diamond was run
+    :param matches_file: the output from diamond
+    :return: dict (with stats in it)
+    """
+    # If the gt results are precomputed, just read them in
+    simulation_gene_ids = set()
+    ext = pathlib.Path(simulation_file).suffix
+    # If the abund was passed, just read it in
+    if ext == '.abund':
+        with open(f"{simulation_file}", 'r') as fid:
+            for line in fid.readlines():
+                ident, count = line.strip().split('\t')
+                simulation_gene_ids.add(ident)
+    elif ext == '.fq':
+        simulation_gene_ids = set(compute_rel_abundance(simulation_file).keys())
+    else:
+        raise Exception(f"Unknown file extension {ext}. Must be either fq or abund")
+    diamond_gene_ids, n_correct_alignments, n_incorrect_alignments = parse_diamond_results(matches_file)
+    diamond_gene_ids = set(diamond_gene_ids)
+    stats = dict()
+    stats['TP'] = len(diamond_gene_ids.intersection(simulation_gene_ids))
+    stats['FP'] = len(diamond_gene_ids.difference(simulation_gene_ids))
+    stats['FN'] = len(simulation_gene_ids.difference(diamond_gene_ids))
+    stats['precision'] = stats['TP'] / float(stats['TP'] + stats['FP'])
+    stats['recall'] = stats['TP'] / float(stats['TP'] + stats['FN'])
+    if stats['TP']:
+        stats['F1'] = 2 * stats['precision'] * stats['recall'] / float(stats['precision'] + stats['recall'])
+    else:
+        stats['F1'] = 0
+    stats['Percent correct alignments'] = n_correct_alignments / float(n_correct_alignments + n_incorrect_alignments)
+    return stats
+
+
+
+
 # TODO: calculate weighted stats. Need to understand what the difference columns in the sourmash gather results are actually returning

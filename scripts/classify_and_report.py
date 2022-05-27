@@ -14,7 +14,7 @@ import warnings
 # for relative imports
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
-from src.HelperFuncs import make_sketches, compute_rel_abundance, run_sourmash_gather, check_extension, calc_binary_stats
+from src.HelperFuncs import make_sketches, compute_rel_abundance, run_sourmash_gather, check_extension, calc_binary_stats_sourmash
 
 
 def main():
@@ -96,7 +96,7 @@ def main():
         run_sourmash_gather(query_sketch_file, ref_sketch_file, gather_out_file, query_sketch_type, num_results=num_res,
                             threshold_bp=threshold_bp, quiet=False)
     # And calculate the results
-    stats = calc_binary_stats(rel_abund_file, gather_out_file)
+    stats = calc_binary_stats_sourmash(rel_abund_file, gather_out_file)
     print(stats)
 
 
