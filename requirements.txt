@@ -3,3 +3,10 @@ sourmash>=4.4.0
 pandas
 biopython
 numpy
+# These are for CAMISIM, but they apparently conflict with the above (samtools in particular) but leaving here for easy
+# CAMISIM install
+#conda create -y -n cami_env_py27 python=2.7
+#conda activate cami_env_py27
+#conda install -y -c bioconda samtools=1.9
+#conda install -y -c bioconda bbmap
+#conda install -y -c anaconda biopython

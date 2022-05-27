@@ -84,3 +84,9 @@ And you should get a result like
 ```commandline
 {'TP': 98, 'FP': 110, 'FN': 2, 'precision': 0.47115384615384615, 'recall': 0.98, 'F1': 0.6363636363636364, 'Percent correct alignments': 0.8630737190242755, 'Total number of alignments': 1156228, 'Total number of sequences': 1000000.0}
 ```
+
+# CAMISIM
+Following the guide [here](https://github.com/KoslickiLab/useful_tools/tree/main/Metagenomics/simulate_metagenomic_by_CAMISIM) (thanks Shaopeng!) to set things up.
+
+# Other methods to compare against
+https://github.com/biobakery/shortbred
