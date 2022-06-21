@@ -1,6 +1,5 @@
 pandas
 sourmash>=4.4.0
-pandas
 biopython
 numpy
 # These are for CAMISIM, but they apparently conflict with the above (samtools in particular) but leaving here for easy
