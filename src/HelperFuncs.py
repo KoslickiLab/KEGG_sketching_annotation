@@ -44,11 +44,11 @@ def run_simulation(reference_file, out_file, num_reads, len_reads=150, noisy=Fal
         cmd += f"simplenames={simple_names} overwrite={overwrite} illuminanames={illumina_names} metagenome={metagenome} "
         if noisy:
             # TODO: hard code these for now, look up realistic values later
-            snprate = 0.1
-            insrate = 0.1
-            delrate = 0.1
-            subrate = 0.1
-            nrate = 0.1
+            snprate = 0.01
+            insrate = 0.01
+            delrate = 0.01
+            subrate = 0.01
+            nrate = 0.01
             cmd += f"snprate={snprate} insrate={insrate} delrate={delrate} subrate={subrate} nrate={nrate} "
         else:
             cmd += f"snprate=0 insrate=0 delrate=0 subrate=0 nrate=0 maxsnps=0 maxinss=0 maxdels=0 maxsubs=0 maxns=0 adderrors=f "
