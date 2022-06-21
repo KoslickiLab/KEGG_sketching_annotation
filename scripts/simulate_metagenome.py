@@ -3,6 +3,7 @@ import argparse
 import os
 import sys
 import subprocess
+import platform
 # for relative imports
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
@@ -40,7 +41,10 @@ def main():
     run_simulation(reference_file, out_file, num_reads, len_reads, noisy=noisy, num_orgs=num_orgs)
     # For some really odd reason, some (but not all) of the underscores in the names are converted to left brackets {
     # So let's replace them back
-    subprocess.run("sed -i 's/{/_/g' " + out_file, stdout=subprocess.PIPE, shell=True)
+    if platform.system() == 'Darwin':
+        subprocess.run("sed -i.bu 's/{/_/g' " + out_file, stdout=subprocess.PIPE, shell=True)
+    else:
+        subprocess.run("sed -i 's/{/_/g' " + out_file, stdout=subprocess.PIPE, shell=True)
     matches_tally = compute_rel_abundance(out_file)
     # Save this for later use
     # Sort it first, descending order

@@ -22,7 +22,7 @@ def run_simulation(reference_file, out_file, num_reads, len_reads=150, noisy=Fal
     :param len_reads: how long the reads are (default is 150bp)
     :param noisy: flag if you want noise injected to the simulation
     :param num_orgs: specify the number of organisms/genes/proteins/etc. to include in the simulation
-    :return:
+    :return: None
     """
     # First subsample the database so there are only num_orgs in the new reference file
     with tempfile.NamedTemporaryFile(suffix=pathlib.Path(reference_file).suffix) as subsample_ref_file:
@@ -44,12 +44,14 @@ def run_simulation(reference_file, out_file, num_reads, len_reads=150, noisy=Fal
         cmd += f"simplenames={simple_names} overwrite={overwrite} illuminanames={illumina_names} metagenome={metagenome} "
         if noisy:
             # TODO: hard code these for now, look up realistic values later
-            snprate = .01
-            insrate = .01
-            delrate = .01
-            subrate = .01
-            nrate = .01
+            snprate = 0.1
+            insrate = 0.1
+            delrate = 0.1
+            subrate = 0.1
+            nrate = 0.1
             cmd += f"snprate={snprate} insrate={insrate} delrate={delrate} subrate={subrate} nrate={nrate} "
+        else:
+            cmd += f"snprate=0 insrate=0 delrate=0 subrate=0 nrate=0 maxsnps=0 maxinss=0 maxdels=0 maxsubs=0 maxns=0 adderrors=f "
         cmd += f"ref={subsample_ref_file.name} out={out_file} reads={num_reads} length={len_reads} "
         res = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
         if res.returncode != 0:
