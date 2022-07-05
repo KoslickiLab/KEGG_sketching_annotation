@@ -123,7 +123,7 @@ def main():
     if not os.path.isdir(save_path):
         raise Exception(f"The file path must be a directory. I was given {save_path}")
     # check if directory is empty
-    if not os.listdir(save_path):
+    if os.listdir(save_path):
         print(f" WARNING: the directory {save_path} is not empty, press any key to continue or ctrl+c to exit")
         input()
 
@@ -132,7 +132,15 @@ def main():
 
     # ----------------------------- ^^^ Arguments and Interface ^^^ ---------------------------------------------
     print("Connecting...")
-    bacteriaDirectoryNames = helper.ftp.nlst()  # list of possible refrence bacterias
+    # Keep trying to connect until we succeed
+    got_names = False
+    bacteriaDirectoryNames = None
+    while not got_names and not bacteriaDirectoryNames:
+        try:
+            bacteriaDirectoryNames = helper.ftp.nlst()  # list of possible refrence bacterias
+            got_names = True
+        except EOFError:
+            print("FTP connection error, trying again")
     checker_varible = bacteriaDirectoryNames[0]
     randomlist = random.sample(range(0, len(bacteriaDirectoryNames)-2), number_of_genomes)  # get a random sample
     print("Downloading...")
