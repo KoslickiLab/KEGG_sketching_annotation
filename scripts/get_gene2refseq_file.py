@@ -9,6 +9,7 @@ def main():
                                     " then will download the gene2refseqfile, to procceed you need to"
                                     " modify the username and password of the ftp login (line 16)."
                                     ,formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.parse_args()
     # login to ftp and direct to needed directory
     print("Connecting...")
     try:
