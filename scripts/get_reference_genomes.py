@@ -17,12 +17,19 @@ class Helper:
         # Connect to the FTP database
         # Connect to FTP database
         # login to ftp and direct to needed directory
+        self.ftp = None
+        self.is_connected = False
+        self.credentials = credentials
+        self.connect()
+
+    def connect(self):
         try:
             ftp = FTP('ftp.ncbi.nlm.nih.gov')
-            ftp.login(user="anonymous", passwd=f"{credentials}")  # login creds to the ftp server
+            ftp.login(user="anonymous", passwd=f"{self.credentials}")  # login creds to the ftp server
             ftp.cwd('genomes/.vol2/refseq/bacteria/')
             ftp.encoding = "utf-8"
             self.ftp = ftp
+            self.is_connected = True
         except:
             raise Exception(
                 "ALERT: Could not connect to the ftp server, please check your internet connection or ftp credentials")
@@ -141,6 +148,8 @@ def main():
             got_names = True
         except EOFError:
             print("FTP connection error, trying again")
+            helper.ftp.close()
+            helper.connect()
     checker_varible = bacteriaDirectoryNames[0]
     randomlist = random.sample(range(0, len(bacteriaDirectoryNames)-2), number_of_genomes)  # get a random sample
     print("Downloading...")
