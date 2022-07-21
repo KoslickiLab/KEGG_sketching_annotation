@@ -50,7 +50,50 @@ Running the following will print out binary classification results:
 ```
 which will result in something like:
 ```commandline
+<<<<<<< HEAD
 {'TP': 493, 'FP': 3, 'FN': 158, 'precision': 0.9939516129032258, 'recall': 0.7572964669738863, 'F1': 0.8596338273757629}
 ```
 
 ## Test
+=======
+{'TP': 97, 'FP': 0, 'FN': 3, 'precision': 1.0, 'recall': 0.97, 'F1': 0.9847715736040609}
+```
+
+# Comparison to DIAMOND
+DIAMOND is an alignment-based functional annotation software package that is widely used.
+Let's compare the sourmash/FracMinHash approach to DIAMOND. 
+
+## Install instructions
+Updated from [here](https://github.com/bbuchfink/diamond/wiki):
+```commandline
+# downloading the tool
+wget http://github.com/bbuchfink/diamond/releases/download/v2.0.15/diamond-linux64.tar.gz
+tar xzf diamond-linux64.tar.gz
+# creating a diamond-formatted database file
+./diamond makedb --in reference.fasta -d reference
+# running a search in blastp mode
+./diamond blastp -d reference -q queries.fasta -o matches.tsv
+# running a search in blastx mode
+./diamond blastx -d reference -q reads.fasta -o matches.tsv
+# downloading and using a BLAST database
+update_blastdb.pl --decompress --blastdb_version 5 swissprot
+./diamond prepdb -d swissprot
+./diamond blastp -d swissprot -q queries.fasta -o matches.tsv
+```
+
+## Running DIAMOND and parsing the results
+After making the simulation, run via:
+```commandline
+ ./classify_and_report_diamond.py -r ../test_data/input/kegg_genes_KO.faa -m ../test_data/output/test_simulation.fq -o ../test_data/output/
+```
+And you should get a result like
+```commandline
+{'TP': 98, 'FP': 110, 'FN': 2, 'precision': 0.47115384615384615, 'recall': 0.98, 'F1': 0.6363636363636364, 'Percent correct alignments': 0.8630737190242755, 'Total number of alignments': 1156228, 'Total number of sequences': 1000000.0}
+```
+
+# CAMISIM
+Following the guide [here](https://github.com/KoslickiLab/useful_tools/tree/main/Metagenomics/simulate_metagenomic_by_CAMISIM) (thanks Shaopeng!) to set things up.
+
+# Other methods to compare against
+https://github.com/biobakery/shortbred
+>>>>>>> c3db5216001d872ba169b89ab0d16cccf774dd78
