@@ -45,6 +45,13 @@ class Helper:
                 ftp.cwd(ftp.nlst()[0])
         return final_Directory
 
+    def check_if_gbff_exists(self):
+        ftp = self.ftp
+        for file in ftp.nlst():
+            if file.endswith(".gbff.gz"):
+                return True
+        return False
+
     def count_files_in_directory(self, path): # count how many directories are in the reference_genomes folder
         count = 0
         for directory in os.listdir(path):
@@ -64,6 +71,16 @@ class Helper:
         path = self.make_file(os.path.join(path, f"{current_directory_name}"))
         for filename in ftp.nlst():
             if filename.endswith(".fna.gz"):
+                completeName = os.path.join(path, filename)
+                file = open(completeName, "wb")
+                ftp.retrbinary(f"RETR {filename}", file.write)
+                file.close()
+
+    def download_GBFF_file(self,path, current_directory_name):
+        ftp = self.ftp
+        path = self.make_file(os.path.join(path, f"{current_directory_name}"))
+        for filename in ftp.nlst():
+            if filename.endswith(".gbff.gz"):
                 completeName = os.path.join(path, filename)
                 file = open(completeName, "wb")
                 ftp.retrbinary(f"RETR {filename}", file.write)
@@ -158,10 +175,41 @@ def main():
             helper.ftp.close()
             helper.connect()
     checker_varible = bacteriaDirectoryNames[0]
-    randomlist = random.sample(range(0, len(bacteriaDirectoryNames)-2), number_of_genomes)  # get a random sample
+
+
     print("Downloading...")
     path = helper.make_file(save_path + '/reference_genomes')  # make main folder
     INITAL_COUNT = helper.count_files_in_directory(path)
+
+    total_downloaded = 0
+    downloaded_genomes = []
+    while total_downloaded < number_of_genomes:
+        while True:
+            random_index = random.randint(0, len(bacteriaDirectoryNames)-2)
+            if random_index in downloaded_genomes:
+                continue
+
+            current_directory_name = bacteriaDirectoryNames[random_index]
+            helper.ftp.cwd(current_directory_name)
+            helper.go_to_direct()
+            gbff_exists = helper.check_if_gbff_exists()
+            if not gbff_exists:
+                print("Did not find GBFF for " + str(current_directory_name) + ", skipping...")
+                continue
+
+            downloaded_genomes.append(random_index)
+            break
+
+        # download selected genome and gbff
+        helper.download_FNA_file(path, current_directory_name)
+        helper.download_GBFF_file(path, current_directory_name)
+        total_downloaded += 1
+        helper.return_to_original_direct()
+
+    helper.ftp.close()
+
+    """
+    # Omar's code
     used_genomes = []
     while helper.check_count(path, INITAL_COUNT, number_of_genomes) != True:  # main loop to save file
         aRandomNumber = random.randint(0, len(bacteriaDirectoryNames)-2)
@@ -181,8 +229,8 @@ def main():
         except EOFError as e:
             print(f"ALERT: Unkown Error occured! Please re-run for more genomes if needed! \nTotal Number of downloaded genomes: {helper.count_files_in_directory(path)}")
             break
-    helper.ftp.close() # close the connection
-    if wanna_unzip == "true" or wanna_unzip == "True" or wanna_unzip == "yes" or wanna_unzip == "Yes":
+    """
+    if wanna_unzip:
         print("Unzipping files...")
         helper.unzip(path)  # unzip the files
         helper.remove_zip(path)  # delete zipped files
