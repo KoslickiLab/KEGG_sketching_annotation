@@ -45,6 +45,13 @@ class Helper:
                 ftp.cwd(ftp.nlst()[0])
         return final_Directory
 
+    def check_if_gbff_exists(self):
+        ftp = self.ftp
+        for file in ftp.nlst():
+            if file.endswith(".gbff.gz"):
+                return True
+        return False
+
     def count_files_in_directory(self, path): # count how many directories are in the reference_genomes folder
         count = 0
         for directory in os.listdir(path):
@@ -64,6 +71,16 @@ class Helper:
         path = self.make_file(os.path.join(path, f"{current_directory_name}"))
         for filename in ftp.nlst():
             if filename.endswith(".fna.gz"):
+                completeName = os.path.join(path, filename)
+                file = open(completeName, "wb")
+                ftp.retrbinary(f"RETR {filename}", file.write)
+                file.close()
+
+    def download_GBFF_file(self,path, current_directory_name):
+        ftp = self.ftp
+        path = self.make_file(os.path.join(path, f"{current_directory_name}"))
+        for filename in ftp.nlst():
+            if filename.endswith(".gbff.gz"):
                 completeName = os.path.join(path, filename)
                 file = open(completeName, "wb")
                 ftp.retrbinary(f"RETR {filename}", file.write)
@@ -105,22 +122,29 @@ class Helper:
 
 def main():
     parser = argparse.ArgumentParser(description="This Script will connect to the ftp server,"
-                                    " then will download a random sample of refrenced genomes,"
+                                    " then will download a random sample of referenced genomes,"
                                     " you can run the script again to add more genomes, "
                                     "to proceed you need to modify to your ftp crednetials, then"
                                     " enter the 3 postional arguments 'number_of_genomes', "
                                     "'wanna_unzip', and 'save_path'"
                                     ,formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-n", "--number_of_genomes", type=int, help="The number of refrence genomes to be downloaded")
+    parser.add_argument("-n", "--number_of_genomes", type=int, help="The number of reference genomes to be downloaded")
     parser.add_argument("-u", "--unzip", action='store_true', help="Whether you would like the files to be unzipped after download."
                                                     "If files are too large, the unzipping operation fails")
     parser.add_argument("-s", "--save_path", type=str, help="The full path to the directory that the files will be downloaded in")
     parser.add_argument("-c", "--credentials", type=str, help="NCBI wants you to login to the ftp server with your email address", default="user@email")
+    parser.add_argument("-S", "--seed", type=int, help="Random seed for reproducibility", default=0)
     args = parser.parse_args()
+
     number_of_genomes = args.number_of_genomes
     wanna_unzip = args.unzip
     save_path = args.save_path
     credentials = args.credentials
+    seed = args.seed
+
+    # set random seed for reproducibility
+    random.seed(seed)
+
     # Check arguments
     if number_of_genomes <= 0:
         raise Exception("The number of genomes to be downloaded must be greater than 0")
@@ -144,17 +168,48 @@ def main():
     bacteriaDirectoryNames = None
     while not got_names and not bacteriaDirectoryNames:
         try:
-            bacteriaDirectoryNames = helper.ftp.nlst()  # list of possible refrence bacterias
+            bacteriaDirectoryNames = helper.ftp.nlst()  # list of possible reference bacterias
             got_names = True
         except EOFError:
             print("FTP connection error, trying again")
             helper.ftp.close()
             helper.connect()
     checker_varible = bacteriaDirectoryNames[0]
-    randomlist = random.sample(range(0, len(bacteriaDirectoryNames)-2), number_of_genomes)  # get a random sample
+
+
     print("Downloading...")
-    path = helper.make_file(save_path + 'refrence_genomes')  # make main folder
+    path = helper.make_file(save_path + '/reference_genomes')  # make main folder
     INITAL_COUNT = helper.count_files_in_directory(path)
+
+    total_downloaded = 0
+    downloaded_genomes = []
+    while total_downloaded < number_of_genomes:
+        while True:
+            random_index = random.randint(0, len(bacteriaDirectoryNames)-2)
+            if random_index in downloaded_genomes:
+                continue
+
+            current_directory_name = bacteriaDirectoryNames[random_index]
+            helper.ftp.cwd(current_directory_name)
+            helper.go_to_direct()
+            gbff_exists = helper.check_if_gbff_exists()
+            if not gbff_exists:
+                print("Did not find GBFF for " + str(current_directory_name) + ", skipping...")
+                continue
+
+            downloaded_genomes.append(random_index)
+            break
+
+        # download selected genome and gbff
+        helper.download_FNA_file(path, current_directory_name)
+        helper.download_GBFF_file(path, current_directory_name)
+        total_downloaded += 1
+        helper.return_to_original_direct()
+
+    helper.ftp.close()
+
+    """
+    # Omar's code
     used_genomes = []
     while helper.check_count(path, INITAL_COUNT, number_of_genomes) != True:  # main loop to save file
         aRandomNumber = random.randint(0, len(bacteriaDirectoryNames)-2)
@@ -168,14 +223,14 @@ def main():
                 helper.go_to_direct()  # go to the directory with the FASTA files
                 helper.download_FNA_file(path, current_directory_name)  # download the FASTA files
                 helper.return_to_original_direct()  # return to the main directory once done
-            except:  
+            except:
                 if helper.ftp.nlst()[0] != checker_varible:
                     helper.return_to_original_direct()  # return to the main directory once done
         except EOFError as e:
             print(f"ALERT: Unkown Error occured! Please re-run for more genomes if needed! \nTotal Number of downloaded genomes: {helper.count_files_in_directory(path)}")
             break
-    helper.ftp.close() # close the connection
-    if wanna_unzip == "true" or wanna_unzip == "True" or wanna_unzip == "yes" or wanna_unzip == "Yes":
+    """
+    if wanna_unzip:
         print("Unzipping files...")
         helper.unzip(path)  # unzip the files
         helper.remove_zip(path)  # delete zipped files
@@ -185,4 +240,3 @@ if __name__ == "__main__":
     # issue1: explore why EOFError occurs often from ftplib moudle
     # issue2: enhance the method that goes to the propper directory of the geneome
     main()
-

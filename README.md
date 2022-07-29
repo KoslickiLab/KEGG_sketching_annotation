@@ -50,12 +50,13 @@ Running the following will print out binary classification results:
 ```
 which will result in something like:
 ```commandline
+=======
 {'TP': 97, 'FP': 0, 'FN': 3, 'precision': 1.0, 'recall': 0.97, 'F1': 0.9847715736040609}
 ```
 
 # Comparison to DIAMOND
 DIAMOND is an alignment-based functional annotation software package that is widely used.
-Let's compare the sourmash/FracMinHash approach to DIAMOND. 
+Let's compare the sourmash/FracMinHash approach to DIAMOND.
 
 ## Install instructions
 Updated from [here](https://github.com/bbuchfink/diamond/wiki):
@@ -90,3 +91,4 @@ Following the guide [here](https://github.com/KoslickiLab/useful_tools/tree/main
 
 # Other methods to compare against
 https://github.com/biobakery/shortbred
+>>>>>>> c3db5216001d872ba169b89ab0d16cccf774dd78
