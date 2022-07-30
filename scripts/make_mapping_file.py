@@ -6,8 +6,10 @@ import pandas as pd
 def parse_args():
     parser = argparse.ArgumentParser(description="This script will create a mapping file for the genes present in\n"
                                                 " a list of genomes. The genomes should be located in a directory.\n"
-                                                "The directory is entered as an argument. The genomes should be in\n"
-                                                "unzipped fna file format. The gbff files should be in the same directory.",
+                                                " The directory is entered as an argument. The genomes should be in\n"
+                                                " unzipped fna file format. The gbff files should be in the same directory.\n"
+                                                " After finishing, the script will output one csv file per genome in that "
+                                                " genome's directiry with the same name.",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("in_dir", type=str, help="The full path to the directory that contains the genomes.")
     return parser.parse_args()
@@ -35,6 +37,8 @@ def main():
             if filename.endswith("genomic.gbff"):
                 gbff_filename = filename
 
+        print('Handling genome: ' + genome_name)
+
         need_to_crash = False
         if fna_filename is None:
             print("Could not find fna file!")
@@ -45,6 +49,8 @@ def main():
 
         if need_to_crash:
             exit(-1)
+
+        print('Working with fna file: ' + fna_filename + ' and gbff file: ' + gbff_filename)
 
         parsed_fna = SeqIO.parse(genome_dir + '/' + fna_filename, 'fasta')
         fasta_sequences = {}
