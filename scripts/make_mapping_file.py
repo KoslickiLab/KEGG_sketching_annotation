@@ -66,17 +66,18 @@ def main():
                     assembly_id = db.split(':')[1]
             for feature in rec.features:
                 if feature.type == "CDS":
-                    if 'protein_id' in feature.qualifiers:
+                    if 'protein_id' in feature.qualifiers and 'locus_tag' in feature.qualifiers:
                         if 'translation' in feature.qualifiers:
                             if feature.location.start.position and feature.location.end.position:
+                                gene_name = feature.qualifiers['locus_tag'][0]
                                 start_position = feature.location.start.position
                                 end_position = feature.location.end.position
                                 strand = feature.strand  # Important to know if this sequence is read left to right or right to left
                                 protein_id = feature.qualifiers['protein_id'][0]  # which protein this actually is
                                 amino_acid = feature.qualifiers['translation'][0]  # the actual amino acid sequence that will be used to train the classifiers
-                                mapping_records.append((genome_name, assembly_id, protein_id, rec.id, start_position, end_position, strand, amino_acid, str(fasta_sequences[rec.id][start_position-1:end_position])))
+                                mapping_records.append((genome_name, assembly_id, gene_name, protein_id, rec.id, start_position, end_position, strand, amino_acid, str(fasta_sequences[rec.id][start_position-1:end_position])))
 
-        df = pd.DataFrame(mapping_records, columns=['genome_name', 'assembly_id', 'protein_id', 'contig_id', 'start_position', 'end_position', 'strand', 'aa_sequence', 'nt_sequence'])
+        df = pd.DataFrame(mapping_records, columns=['genome_name', 'assembly_id', 'gene_name', 'protein_id', 'contig_id', 'start_position', 'end_position', 'strand', 'aa_sequence', 'nt_sequence'])
         df.to_csv(genome_dir + '/' + mapping_filename)
 
 if __name__ == "__main__":
