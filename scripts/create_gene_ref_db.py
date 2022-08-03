@@ -12,7 +12,7 @@ def parse_args():
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument("in_dir", type=str, help="The full path to the directory that contains the genomes.")
-    parser.add_argument("db_name", type=str, help="Name of the fasta datanase")
+    parser.add_argument("db_name", type=str, help="Name of the fasta database")
     return parser.parse_args()
 
 def main():
