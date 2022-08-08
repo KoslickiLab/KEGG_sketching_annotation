@@ -6,6 +6,32 @@ import pandas as pd
 import screed
 
 
+def interval_overlap(interval1, interval2):
+    """
+    This function will determine if two intervals overlap, and by how much.
+    :param interval1: The first interval
+    :param interval2: The second interval
+    :return: True if the intervals overlap, False otherwise
+    """
+    start, end = interval1[0], interval1[1]
+    start_pos, end_pos = interval2[0], interval2[1]
+    if end < start_pos:  # no overlap
+        return False
+    elif end >= start_pos > start:  # right side overlap
+        return start_pos, end
+    elif start_pos <= end <= end_pos and start_pos <= start <= end_pos:  # proper subset overlap
+        return start, end
+    elif end > end_pos >= start >= start_pos:  # left side overlap
+        return start, end_pos
+    elif start > end_pos: # no overlap
+        return False
+    elif start < start_pos and end > end_pos:  # proper superset overlap
+        return start_pos, end_pos
+    else:
+        print("Error in interval overlap")
+        exit(-1)
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="This script will take a simulation and a reference database of genes"
                                                  "and find the location of the genes in the simulation. The output will"
@@ -58,6 +84,7 @@ def main():
         mapping_df = mapping_dfs.append(pd.read_csv(mapping_file))
     # merge all the mapping files into one dataframe
     mapping_df = pd.concat(mapping_dfs)
+    #print(mapping_df)
 
     # import the simulation file
     sequence_headers = []
@@ -75,18 +102,50 @@ def main():
     # strand
     # bbstart - from the code, it looks like this is some internal coordinate used by bbtools
     # bbchrom - again, from code, seems like internal representation of chromosomes inside of bbtools’ code
-    simulation_read_locs = []
+    simulation_df = pd.DataFrame(columns=["contig_id", "start", "end"])
     for header in sequence_headers:
-        header_split = header.strip().split("_")
+        header_split = header.split("_")
         start = int(header_split[2])
         end = int(header_split[3])
-        simulation_read_locs.append((start, end))
-    # sanity check the read lengths
-    #read_lengths = [x[1] - x[0] for x in simulation_read_locs]
-    # make unique the read lengths
-    #read_lengths = list(set(read_lengths))
-    #print(read_lengths)
+        contig_id = "_".join(header_split[9:11])  # this assumes that the format of the simulation will not change
+        contig_id = contig_id.split("$")[0]
+        # add the row to the dataframe
+        simulation_df.loc[len(simulation_df)] = [contig_id, start, end]
 
+    # create dataframe for output
+    output_df = pd.DataFrame(columns=["contig_id", "gene_name", "protein_id", "num_bases_overlap", "overlap_start", "overlap_end"])
+    # iterate through the simulation dataframe
+    for i in range(len(simulation_df)):
+        # get the contig id
+        contig_id = simulation_df.iloc[i]["contig_id"]
+        # get the start and end positions of the read
+        start = simulation_df.iloc[i]["start"]
+        end = simulation_df.iloc[i]["end"]
+        #print(f"Analyzing contig {contig_id}: start {start} end {end}")
+        # get the mapping dataframe for the contig
+        contig_mapping_df = mapping_df[mapping_df["contig_id"] == contig_id]
+        # iterate through the mapping dataframe
+        for j in range(len(contig_mapping_df)):
+            # check if the read overlaps with this gene
+            gene_start = contig_mapping_df.iloc[j]["start_position"]
+            gene_end = contig_mapping_df.iloc[j]["end_position"]
+            overlap_interval = interval_overlap((start, end), (gene_start, gene_end))
+            if overlap_interval:
+                # get the gene name
+                gene_name = contig_mapping_df.iloc[j]["gene_name"]
+                # get the protein id
+                protein_id = contig_mapping_df.iloc[j]["protein_id"]
+                # get the number of bases that overlap
+                num_bases_overlap = overlap_interval[1] - overlap_interval[0] + 1
+                # get the overlap start and end positions
+                overlap_start = overlap_interval[0]
+                overlap_end = overlap_interval[1]
+                # add the row to the dataframe
+                output_df.loc[len(output_df)] = [contig_id, gene_name, protein_id, num_bases_overlap, overlap_start, overlap_end]
+                #print(f"Gene start {gene_start} end {gene_end}, read start {start} end {end}")
+                #print(f"Overlap start {overlap_start} end {overlap_end}")
+    # write the output file
+    output_df.to_csv(output_file, index=False)
 
 
 
@@ -96,3 +155,5 @@ if __name__ == "__main__":
 
 
 # ./find_genes_in_sim.py --database_dir ../test_data/input/reference_genomes/ --simulation ../test_data/output/simulated_metagenome.fq --output_file ../test_data/output/found_genes.csv
+# database_dir="test_data/input/reference_genomes"
+# simulation_file="test_data/output/simulated_metagenome.fq"
