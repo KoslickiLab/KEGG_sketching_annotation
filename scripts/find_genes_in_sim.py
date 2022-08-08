@@ -1,9 +1,60 @@
 #!/usr/bin/env python
 import argparse
-import os
+import os, sys
 from Bio import SeqIO
 import pandas as pd
 import screed
+import numpy as np
+# add parent folder to path
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(parent_dir)
+from utils.pyinterval.interval import interval
+
+
+def interval_length(intvals):
+    length = 0
+    for intval in intvals:
+        length += intval[1] - intval[0]
+    return length
+
+
+def create_ground_truth(found_genes_df):
+    """
+    This function will take the dataframe that contains all the genes found in the simulation and output
+    a ground truth functional profile
+    :param found_genes_df:
+    :return: dataframe with columns: gene_name, nucleotide_overlap, median_coverage, mean_coverage, reads_mapped
+    """
+    unique_genes = found_genes_df.gene_name.unique()
+    ground_truth_df = pd.DataFrame(columns=["gene_name", "nucleotide_overlap", "median_coverage", "mean_coverage", "reads_mapped"])
+    for gene in unique_genes:
+        gene_df = found_genes_df[found_genes_df.gene_name == gene]
+        # get overlap intervals
+        interval_tuples = list(zip(gene_df.overlap_start, gene_df.overlap_end))
+        # Convert these to intervals
+        intervals = [interval[start, end] for start, end in interval_tuples]
+        #print(intervals)
+        # take the union of all the intervals
+        intervals_union = intervals[0]
+        for intval in intervals[1:]:
+            intervals_union = intervals_union | intval
+        # this is the total number of gene nucleotides that have been covered by reads from the simulations
+        nucleotide_overlap = interval_length(intervals_union)
+        # Since I iterate over the reads, the number of entries in this data frame is the number of reads that has mapped to this gene
+        reads_mapped = len(gene_df)
+        # since this df is the subset corresponding to a single gene, I can pull off the length from the first one
+        gene_start = gene_df.iloc[0].gene_start
+        gene_end = gene_df.iloc[0].gene_end
+        gene_length = gene_end - gene_start + 1
+        # for each location in the gene, get the coverage information
+        coverage_array = np.zeros(gene_length)
+        for i in range(gene_length):
+            coverage_array[i] = sum((i+gene_start) in intval for intval in intervals)
+        median_coverage = np.median(coverage_array)
+        mean_coverage = np.mean(coverage_array)
+        # store the information in the dataframe
+        ground_truth_df.loc[len(ground_truth_df)] = [gene, int(nucleotide_overlap), median_coverage, mean_coverage, int(reads_mapped)]
+    return ground_truth_df
 
 
 def interval_overlap(interval1, interval2):
@@ -113,7 +164,7 @@ def main():
         simulation_df.loc[len(simulation_df)] = [contig_id, start, end]
 
     # create dataframe for output
-    output_df = pd.DataFrame(columns=["contig_id", "gene_name", "protein_id", "num_bases_overlap", "overlap_start", "overlap_end"])
+    output_df = pd.DataFrame(columns=["contig_id", "gene_name", "protein_id", "num_bases_overlap", "overlap_start", "overlap_end", "gene_start", "gene_end"])
     # iterate through the simulation dataframe
     for i in range(len(simulation_df)):
         # get the contig id
@@ -141,12 +192,13 @@ def main():
                 overlap_start = overlap_interval[0]
                 overlap_end = overlap_interval[1]
                 # add the row to the dataframe
-                output_df.loc[len(output_df)] = [contig_id, gene_name, protein_id, num_bases_overlap, overlap_start, overlap_end]
+                output_df.loc[len(output_df)] = [contig_id, gene_name, protein_id, num_bases_overlap, overlap_start, overlap_end, gene_start, gene_end]
                 #print(f"Gene start {gene_start} end {gene_end}, read start {start} end {end}")
                 #print(f"Overlap start {overlap_start} end {overlap_end}")
     # write the output file
-    output_df.to_csv(output_file, index=False)
-
+    # output_df.to_csv(output_file, index=False)
+    ground_truth_df = create_ground_truth(output_df)
+    ground_truth_df.to_csv(output_file, index=False)
 
 
 if __name__ == "__main__":
