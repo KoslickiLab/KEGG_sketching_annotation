@@ -77,16 +77,16 @@ def main():
     if not reuse_query_sketch:
         make_sketches(ksize, query_scale, metagenome_file, query_sketch_type, out_dir, per_record=False)
     # check if the abundances have been calculated from the simulation
-    rel_abund_file = f"{metagenome_file}.abund"
-    gt_rel_abund = Counter()
-    if not exists(rel_abund_file):
-        gt_rel_abund = compute_rel_abundance(metagenome_file)
+    #rel_abund_file = f"{metagenome_file}.abund"
+    #gt_rel_abund = Counter()
+    #if not exists(rel_abund_file):
+    #    gt_rel_abund = compute_rel_abundance(metagenome_file)
     # otherwise read it in
-    else:
-        with open(rel_abund_file, 'r') as fid:
-            for line in fid.readlines():
-                id, count = line.strip().split('\t')
-                gt_rel_abund[id] = count
+    #else:
+    #    with open(rel_abund_file, 'r') as fid:
+    #        for line in fid.readlines():
+    #            id, count = line.strip().split('\t')
+    #            gt_rel_abund[id] = count
     # Then run sourmash gather
     gather_out_file = os.path.join(out_dir, f"{os.path.basename(query_sketch_file)}_{os.path.basename(ref_sketch_file)}_gather.csv")
     if query_translate:
@@ -96,8 +96,9 @@ def main():
         run_sourmash_gather(query_sketch_file, ref_sketch_file, gather_out_file, query_sketch_type, num_results=num_res,
                             threshold_bp=threshold_bp, quiet=False)
     # And calculate the results
-    stats = calc_binary_stats_sourmash(rel_abund_file, gather_out_file)
-    print(stats)
+    #stats = calc_binary_stats_sourmash(rel_abund_file, gather_out_file)
+    # TODO: use the find_genes_in_sim.py script to calculate the results
+    # print(stats)
 
 
 if __name__ == "__main__":
