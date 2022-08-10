@@ -40,8 +40,9 @@ def run_simulation(reference_file, out_file, num_reads, len_reads=150, noisy=Fal
         illumina_names = "f"
         overwrite = "t"
         metagenome = "t"
+        banns = "t"
         # Note: reads by default are exactly 150bp long, not paired
-        cmd += f"simplenames={simple_names} overwrite={overwrite} illuminanames={illumina_names} metagenome={metagenome} "
+        cmd += f"simplenames={simple_names} overwrite={overwrite} illuminanames={illumina_names} metagenome={metagenome} banns={banns} "
         if noisy:
             # TODO: hard code these for now, look up realistic values later
             snprate = 0.01
@@ -61,6 +62,8 @@ def run_simulation(reference_file, out_file, num_reads, len_reads=150, noisy=Fal
 
 def compute_rel_abundance(simulation_fq_file):
     """
+    This function is deprecated!!
+
     This helper function will find the true relative abundances of the sequences in the simulation
     :param simulation_fq_file: The bbmap simulated metagenome
     :return: a Counter object that contains the sequence identifiers and their counts in the simulation
@@ -122,7 +125,7 @@ def run_sourmash_gather(query, database, out_file, sketch_type, num_results=None
     """
     ignore_abundance = True
     estimate_ani_ci = True
-    no_prefetch = True
+    no_prefetch = False  # if set to true, this will disable the prefetch step. This will result in a much slower execution since prefetch does a pre-filtering step to select only database entries relevant to the sample
     if sketch_type not in ['aa', 'nt', 'protein', 'dna']:
         raise Exception(f"sketch type must be one of aa or protein (amino acid) or nt or dna (nucleotide). Provided value was {sketch_type}")
     cmd = f"sourmash gather -o {out_file} "
@@ -166,6 +169,8 @@ def return_unique_gather_hits(gather_out_file):
 
 def calc_binary_stats_sourmash(simulation_file, gather_out_file):
     """
+    This function is deprecated!!
+
     This function takes the simulation fastq file and the gather csv out file and calculates
     binary statistics from it: a dict with keys TP, FP, FN, precision, recall, F1.
     If you provide it a *.abund file, it just reads it as is
@@ -284,6 +289,8 @@ def parse_diamond_results(matches_file):
 
 def calc_binary_stats_diamond(simulation_file, matches_file):
     """
+    This function is deprecated!!
+
     This calculates the binary statistics (from a pure "gene present/absent" perspective) for the performance of DIAMOND
     on simulated data
     :param simulation_file: the simulation fastq file on which diamond was run
@@ -322,6 +329,15 @@ def calc_binary_stats_diamond(simulation_file, matches_file):
     stats['Total number of sequences'] = int(res.stdout.split()[0]) / 4
     return stats
 
+
+def parse_sourmash_results(gather_file):
+    """
+    This function will parse the output from sourmash gather and turn it into a functional profile that we can compare
+    to the ground truth
+    :param gather_file: the csv output from sourmash
+    :return: a dataframe in the same format as that returned by find_genes_in_sim.py
+    """
+    pass
 
 
 
