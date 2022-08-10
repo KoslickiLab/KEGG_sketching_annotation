@@ -66,7 +66,9 @@ def compute_rel_abundance(simulation_fq_file):
     :return: a Counter object that contains the sequence identifiers and their counts in the simulation
     """
     # This assumes that the sequences are labeled as _._[three lower case letters}:{mixed case}_{integer}|
-    regex = r'\_\.\_([a-z]{3}:[a-zA-Z]\w+)'
+    #regex = r'\_\.\_([a-z]{3}:[a-zA-Z]\w+)'
+    # Looks like the labels changed in bbmap v3.0.0, this is now _._[two lower case letters]_{mixed case}_{integer}|
+    regex = r'\_\.\_([a-zA-Z]{2}_[a-zA-Z]\w+)'
     contents = open(simulation_fq_file, 'r').read()
     matches = re.findall(regex, contents)
     matches_tally = Counter(matches)
