@@ -8,6 +8,7 @@ import pathlib
 import tempfile
 from os.path import exists
 import multiprocessing
+import matplotlib.pyplot as plt
 
 bbtools_loc = os.path.abspath("../utils/bbmap")
 diamond_loc = os.path.abspath("../utils/")
@@ -123,7 +124,7 @@ def run_sourmash_gather(query, database, out_file, sketch_type, num_results=None
     :param threshold_bp: int, stop the algorithm once the overlap is below this many base pairs
     :return:
     """
-    ignore_abundance = True
+    ignore_abundance = False
     estimate_ani_ci = True
     no_prefetch = False  # if set to true, this will disable the prefetch step. This will result in a much slower execution since prefetch does a pre-filtering step to select only database entries relevant to the sample
     if sketch_type not in ['aa', 'nt', 'protein', 'dna']:
@@ -332,13 +333,68 @@ def calc_binary_stats_diamond(simulation_file, matches_file):
 
 def parse_sourmash_results(gather_file):
     """
+    Since it's not clear what exactly in sourmash gather will correlate with relative abundance, let's just use everything
+    so we can check it ourselves.
+
     This function will parse the output from sourmash gather and turn it into a functional profile that we can compare
-    to the ground truth
+    to the ground truth.
     :param gather_file: the csv output from sourmash
     :return: a dataframe in the same format as that returned by find_genes_in_sim.py
     """
-    pass
+    if not os.path.exists(gather_file):
+        raise Exception(f"File {gather_file} does not exist")
+    df = pd.read_csv(gather_file)
+    sequence_headers = list(df['name'])
+    gene_names = [x.split('|')[0] for x in sequence_headers]
+    # recover the
 
 
+def check_sourmash_correlation(gather_file, ground_truth_file, corr_threshold=0.9):
+    """
+    Since we don't know which columns of sourmash gather correlate with which columns of the ground truth, we need to
+    just check them all
+    :param gather_file: results of sourmash gather
+    :param ground_truth_file: the output of find_genes_in_sim.py
+    :param corr_threshold: only print out stats if the correlation coef is above this threshold
+    :return: None
+    """
+
+    if not os.path.exists(gather_file):
+        raise Exception(f"File {gather_file} does not exist")
+    if not os.path.exists(ground_truth_file):
+        raise Exception(f"File {ground_truth_file} does not exist")
+    gather_file = "/home/dkoslicki/Documents/KEGG_sketching_annotation/data/simulatedMetagenome.fastq_k_11_scale_1.sig_protein_ref.faa_k_11_scale_1.sig_gather.csv"
+    ground_truth_file = "/home/dkoslicki/Documents/KEGG_sketching_annotation/data/ground_truth.csv"
+    # s prefix is for "sourmash" while g prefix is for "ground truth"
+    sdf = pd.read_csv(gather_file)
+    gdf = pd.read_csv(ground_truth_file)
+    # sort the ground truth by gene name, this will be the order that we stick with
+    gdf = gdf.sort_values(by='gene_name')
+    # grab the sourmash infered gene names
+    sgene_names = list(sdf['name'])
+    sgene_names = [x.split('|')[0] for x in sgene_names]
+    # replace the name column with the sourmash gene names
+    sdf['name'] = sgene_names
+    ggene_names = list(gdf['gene_name'])
+    greads_mapped = np.sum(list(gdf['reads_mapped']))
+    # subset the gather results to concentrate on the ones in the ground truth
+    sdf_TP = sdf[sdf['name'].isin(ggene_names)]
+    sdf_TP = sdf_TP.sort_values(by='name')
+    sdf_FP = sdf[~sdf['name'].isin(ggene_names)]
+    sdf_FN = gdf[~gdf['gene_name'].isin(sgene_names)]
+    # subset the ground truth to only the ones in the gather results
+    gdf_TP = gdf[gdf['gene_name'].isin(sgene_names)]
+    gdf_TP = gdf_TP.sort_values(by='gene_name')
+    # iterate over all the columns of the gather results and return the correlation coefficient with the number of reads mapped
+    ground_truth_cols = ['nucleotide_overlap', 'median_coverage', 'mean_coverage', 'reads_mapped']
+    sourmash_cols = ['intersect_bp', 'f_orig_query', 'f_match', 'f_unique_to_query',
+                     'f_unique_weighted', 'average_abund', 'median_abund', 'std_abund',
+                     'f_match_orig', 'unique_intersect_bp',
+                     'gather_result_rank', 'remaining_bp']
+    for gt_col in ground_truth_cols:
+        for col in sourmash_cols:
+            corr = np.corrcoef(sdf_TP[col], gdf_TP['reads_mapped'])[0][1]
+            if corr > corr_threshold:
+                print(f"gt: {gt_col}, sm:{col}: corr={corr}")
 
 # TODO: calculate weighted stats. Need to understand what the difference columns in the sourmash gather results are actually returning
