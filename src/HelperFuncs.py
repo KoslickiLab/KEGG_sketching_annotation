@@ -61,26 +61,6 @@ def run_simulation(reference_file, out_file, num_reads, len_reads=150, noisy=Fal
     return
 
 
-def compute_rel_abundance(simulation_fq_file):
-    """
-    This function is deprecated!!
-
-    This helper function will find the true relative abundances of the sequences in the simulation
-    :param simulation_fq_file: The bbmap simulated metagenome
-    :return: a Counter object that contains the sequence identifiers and their counts in the simulation
-    """
-    # This assumes that the sequences are labeled as _._[three lower case letters}:{mixed case}_{integer}|
-    #regex = r'\_\.\_([a-z]{3}:[a-zA-Z]\w+)'
-    # Looks like the labels changed in bbmap v3.0.0, this is now _._[two lower case letters]_{mixed case}_{integer}|
-    regex = r'\_\.\_([a-zA-Z]{2}_[a-zA-Z]\w+)'
-    contents = open(simulation_fq_file, 'r').read()
-    matches = re.findall(regex, contents)
-    matches_tally = Counter(matches)
-    print(f"I found {len(matches_tally)} unique matches totalling {np.sum(list(matches_tally.values()))} total matches "
-          f"with the most frequent one occurring {np.max(list(matches_tally.values()))} times")
-    return matches_tally
-
-
 def make_sketches(ksize, scale_factor, file_name, sketch_type, out_dir, per_record=False):
     """
     This helper function will create the signature/sketches using sourmash
@@ -152,58 +132,6 @@ def run_sourmash_gather(query, database, out_file, sketch_type, num_results=None
         raise Exception(f"The command {cmd} exited with nonzero exit code {res.returncode}")
     return
 
-
-def return_unique_gather_hits(gather_out_file):
-    """
-    Takes a sourmash gather csv and returns the unique hits/identifiers in it
-    :param gather_out_file: csv file from sourmash gather -o
-    :return: a list of unique gene identifiers
-    """
-    if not os.path.exists(gather_out_file):
-        raise Exception(f"File {gather_out_file} does not exist")
-    df = pd.read_csv(gather_out_file)
-    names = list(df['name'])
-    name_ids = [x.split('|')[0] for x in names]
-    name_ids_unique = set(name_ids)
-    return list(name_ids_unique)
-
-
-def calc_binary_stats_sourmash(simulation_file, gather_out_file):
-    """
-    This function is deprecated!!
-
-    This function takes the simulation fastq file and the gather csv out file and calculates
-    binary statistics from it: a dict with keys TP, FP, FN, precision, recall, F1.
-    If you provide it a *.abund file, it just reads it as is
-    :param simulation_file: Fastq file that contains the simulated reads, or relative abundances already
-    :param gather_out_file: the results of running sourmash gather on those simulated reads
-    :return: dict
-    """
-    # If the gt results are precomputed, just read them in
-    simulation_gene_ids = set()
-    ext = pathlib.Path(simulation_file).suffix
-    # If the abund was passed, just read it in
-    if ext == '.abund':
-        with open(f"{simulation_file}", 'r') as fid:
-            for line in fid.readlines():
-                ident, count = line.strip().split('\t')
-                simulation_gene_ids.add(ident)
-    elif ext == '.fq':
-        simulation_gene_ids = set(compute_rel_abundance(simulation_file).keys())
-    else:
-        raise Exception(f"Unknown file extension {ext}. Must be either fq or abund")
-    gather_gene_ids = set(return_unique_gather_hits(gather_out_file))
-    stats = dict()
-    stats['TP'] = len(gather_gene_ids.intersection(simulation_gene_ids))
-    stats['FP'] = len(gather_gene_ids.difference(simulation_gene_ids))
-    stats['FN'] = len(simulation_gene_ids.difference(gather_gene_ids))
-    stats['precision'] = stats['TP'] / float(stats['TP'] + stats['FP'])
-    stats['recall'] = stats['TP'] / float(stats['TP'] + stats['FN'])
-    if stats['TP']:
-        stats['F1'] = 2 * stats['precision'] * stats['recall'] / float(stats['precision'] + stats['recall'])
-    else:
-        stats['F1'] = 0
-    return stats
 
 
 def check_extension(file_name):
@@ -288,49 +216,6 @@ def parse_diamond_results(matches_file):
     return inferred_ids, n_correct_alignments, n_incorrect_alignments
 
 
-def calc_binary_stats_diamond(simulation_file, matches_file):
-    """
-    This function is deprecated!!
-
-    This calculates the binary statistics (from a pure "gene present/absent" perspective) for the performance of DIAMOND
-    on simulated data
-    :param simulation_file: the simulation fastq file on which diamond was run
-    :param matches_file: the output from diamond
-    :return: dict (with stats in it)
-    """
-    # If the gt results are precomputed, just read them in
-    simulation_gene_ids = set()
-    ext = pathlib.Path(simulation_file).suffix
-    # If the abund was passed, just read it in
-    if ext == '.abund':
-        with open(f"{simulation_file}", 'r') as fid:
-            for line in fid.readlines():
-                ident, count = line.strip().split('\t')
-                simulation_gene_ids.add(ident)
-    elif ext == '.fq':
-        simulation_gene_ids = set(compute_rel_abundance(simulation_file).keys())
-    else:
-        raise Exception(f"Unknown file extension {ext}. Must be either fq or abund")
-    diamond_gene_ids, n_correct_alignments, n_incorrect_alignments = parse_diamond_results(matches_file)
-    diamond_gene_ids = set(diamond_gene_ids)
-    stats = dict()
-    stats['TP'] = len(diamond_gene_ids.intersection(simulation_gene_ids))
-    stats['FP'] = len(diamond_gene_ids.difference(simulation_gene_ids))
-    stats['FN'] = len(simulation_gene_ids.difference(diamond_gene_ids))
-    stats['precision'] = stats['TP'] / float(stats['TP'] + stats['FP'])
-    stats['recall'] = stats['TP'] / float(stats['TP'] + stats['FN'])
-    if stats['TP']:
-        stats['F1'] = 2 * stats['precision'] * stats['recall'] / float(stats['precision'] + stats['recall'])
-    else:
-        stats['F1'] = 0
-    stats['Percent correct alignments'] = n_correct_alignments / float(n_correct_alignments + n_incorrect_alignments)
-    stats['Total number of alignments'] = n_correct_alignments + n_incorrect_alignments
-    cmd = f"wc -l {simulation_file}"
-    res = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
-    stats['Total number of sequences'] = int(res.stdout.split()[0]) / 4
-    return stats
-
-
 def calculate_sourmash_performance(gather_file, ground_truth_file, filter_threshold):
     """
     This function will parse the output from sourmash gather and turn it into a functional profile that we can compare
@@ -402,8 +287,6 @@ def calculate_sourmash_performance(gather_file, ground_truth_file, filter_thresh
     print(performance)
     # TODO: decide if we want just these metrics, or if we want to iterate over a bunch of filter_threshold
     # TODO: so just print these for now
-
-
 
 
 def check_sourmash_correlation(gather_file, ground_truth_file, corr_threshold=0.9):
