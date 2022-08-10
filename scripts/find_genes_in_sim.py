@@ -26,7 +26,7 @@ def create_ground_truth(found_genes_df):
     :return: dataframe with columns: gene_name, nucleotide_overlap, median_coverage, mean_coverage, reads_mapped
     """
     unique_genes = found_genes_df.gene_name.unique()
-    ground_truth_df = pd.DataFrame(columns=["gene_name", "nucleotide_overlap", "median_coverage", "mean_coverage", "reads_mapped"])
+    ground_truth_df = pd.DataFrame(columns=["gene_name", "gene_length", "nucleotide_overlap", "median_coverage", "mean_coverage", "reads_mapped"])
     for gene in unique_genes:
         gene_df = found_genes_df[found_genes_df.gene_name == gene]
         # get overlap intervals
@@ -53,7 +53,7 @@ def create_ground_truth(found_genes_df):
         median_coverage = np.median(coverage_array)
         mean_coverage = np.mean(coverage_array)
         # store the information in the dataframe
-        ground_truth_df.loc[len(ground_truth_df)] = [gene, int(nucleotide_overlap), median_coverage, mean_coverage, int(reads_mapped)]
+        ground_truth_df.loc[len(ground_truth_df)] = [gene, gene_length, int(nucleotide_overlap), median_coverage, mean_coverage, int(reads_mapped)]
     return ground_truth_df
 
 
