@@ -331,7 +331,7 @@ def calc_binary_stats_diamond(simulation_file, matches_file):
     return stats
 
 
-def parse_sourmash_results(gather_file):
+def calculate_sourmash_performance(gather_file, ground_truth_file, filter_threshold):
     """
     This function will parse the output from sourmash gather and turn it into a functional profile that we can compare
     to the ground truth.
@@ -339,9 +339,71 @@ def parse_sourmash_results(gather_file):
      f_unique_weighted correlates with reads mapped, median, mean coverage, and nucleotide_overlap
 
     :param gather_file: the csv output from sourmash
-    :return: a dataframe in the same format as that returned by find_genes_in_sim.py
+    :param ground_truth_file: the ground truth file (output from find_genes_in_sim.py)
+    :param filter_threshold: ignore ground truth genes that have less than this many reads in the ground truth
+    :return: a dataframe containing the performance characteristics of the sourmash results
     """
-    pass
+    if not os.path.exists(gather_file):
+        raise Exception(f"File {gather_file} does not exist")
+    if not os.path.exists(ground_truth_file):
+        raise Exception(f"File {ground_truth_file} does not exist")
+
+    sourmash_rel_abund_col = 'f_unique_weighted'
+    ground_truth_rel_abund_col = 'reads_mapped'
+
+    # s prefix is for "sourmash" while g prefix is for "ground truth"
+    sdf = pd.read_csv(gather_file)
+    gdf = pd.read_csv(ground_truth_file)
+    # sort the ground truth by gene name, this will be the order that we stick with
+    gdf = gdf.sort_values(by='gene_name')
+
+    # remove the infrequent genes from the ground truth and from sourmash
+    gdf = gdf[gdf['reads_mapped'] >= filter_threshold]
+    # TODO: we may want to remove these from the sourmash results to, since otherwise it could artificially increase the FP rate
+
+
+    # grab the sourmash infered gene names
+    sgene_names = list(sdf['name'])
+    sgene_names = [x.split('|')[0] for x in sgene_names]
+    # replace the name column with the sourmash gene names
+    sdf['name'] = sgene_names
+    ggene_names = list(gdf['gene_name'])
+    greads_mapped = np.sum(list(gdf['reads_mapped']))
+    # subset the gather results to concentrate on the ones in the ground truth
+    sdf_TP = sdf[sdf['name'].isin(ggene_names)]  # true positives in sourmash
+    sdf_TP = sdf_TP.sort_values(by='name')  # sort by gene name
+    sdf_FP = sdf[~sdf['name'].isin(ggene_names)]  # false positives in sourmash
+    sdf_FN = gdf[~gdf['gene_name'].isin(sgene_names)]  # false negatives (ones in ground truth that aren't in sourmash)
+    print(f"Out of {len(sdf)} sourmash results, TP={len(sdf_TP)} are in the ground truth, FP={len(sdf_FP)} are not, "
+          f"and there are FN={len(sdf_FN)} in the ground truth that are not in the sourmash results")
+    # subset the ground truth to only the ones in the gather results
+    gdf_TP = gdf[gdf['gene_name'].isin(sgene_names)]  # subset the ground truth to concentrate on the ones in the gather results
+    gdf_TP = gdf_TP.sort_values(by='gene_name')
+    metrics = ['TP', 'FP', 'FN', 'precision', 'recall', 'F1', 'corr', 'L1_f_unique_weighted_reads_mapped', 'percent_correct_predictions', 'total_number_of_predictions']
+    # calculate the performance metrics
+    performance = dict()
+    performance['TP'] = len(sdf_TP)
+    performance['FP'] = len(sdf_FP)
+    performance['FN'] = len(sdf_FN)
+    performance['precision'] = performance['TP'] / float(performance['TP'] + performance['FP'])
+    performance['recall'] = performance['TP'] / float(performance['TP'] + performance['FN'])
+    if performance['TP']:
+        performance['F1'] = 2 * performance['precision'] * performance['recall'] / float(performance['precision'] + performance['recall'])
+    else:
+        performance['F1'] = 0
+    performance['corr'] = np.corrcoef(sdf_TP[sourmash_rel_abund_col], gdf_TP[ground_truth_rel_abund_col])[0][1]
+    sdf_TP_vec = np.array(sdf_TP[sourmash_rel_abund_col].values)
+    sdf_TP_vec = sdf_TP_vec / np.sum(sdf_TP_vec)
+    gdf_TP_vec = np.array(gdf_TP[ground_truth_rel_abund_col].values)
+    gdf_TP_vec = gdf_TP_vec / np.sum(gdf_TP_vec)
+    performance['L1_f_unique_weighted_reads_mapped'] = np.sum(np.abs(sdf_TP_vec - gdf_TP_vec))
+    performance['percent_correct_predictions'] = len(sdf_TP) / float(len(sdf_TP) + len(sdf_FP))
+    performance['total_number_of_predictions'] = len(sdf_TP) + len(sdf_FP)
+    print(performance)
+    # TODO: decide if we want just these metrics, or if we want to iterate over a bunch of filter_threshold
+    # TODO: so just print these for now
+
+
 
 
 def check_sourmash_correlation(gather_file, ground_truth_file, corr_threshold=0.9):
