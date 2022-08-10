@@ -17,7 +17,7 @@ diamond_loc = os.path.abspath("../utils/")
 def run_simulation(reference_file, out_file, num_reads, len_reads=150, noisy=False, num_orgs=250):
     """
     This function runs a simulation using bbtools "randomreads.sh"
-    :param reference_file: The input sequences from which to make a metagenome TODO: make this auto downsample since currently it uses the whole set
+    :param reference_file: The input sequences from which to make a metagenome
     :param out_file: the name of the output simulation (must be a FASTQ file, so ending in fq or fastq)
     :param num_reads: number of reads to simulate
     :param len_reads: how long the reads are (default is 150bp)

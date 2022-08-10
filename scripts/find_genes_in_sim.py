@@ -10,6 +10,8 @@ parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parent_dir)
 from utils.pyinterval.interval import interval
 
+# TODO: this is very slow O(n^2), could make it faster by using dicts or the like
+
 
 def interval_length(intvals):
     length = 0
@@ -166,6 +168,9 @@ def main():
     # create dataframe for output
     output_df = pd.DataFrame(columns=["contig_id", "gene_name", "protein_id", "num_bases_overlap", "overlap_start", "overlap_end", "gene_start", "gene_end"])
     # iterate through the simulation dataframe
+    # TODO: this is where we can speed up the code
+    # Pre-compute the coverage array for each contig
+    # and/or parallelize over the simulation dataframe
     for i in range(len(simulation_df)):
         # get the contig id
         contig_id = simulation_df.iloc[i]["contig_id"]
