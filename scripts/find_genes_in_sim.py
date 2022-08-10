@@ -29,13 +29,19 @@ def create_ground_truth(found_genes_df):
     """
     unique_genes = found_genes_df.gene_name.unique()
     ground_truth_df = pd.DataFrame(columns=["gene_name", "gene_length", "nucleotide_overlap", "median_coverage", "mean_coverage", "reads_mapped"])
+    ground_truth_df_data = {"gene_name": [], "gene_length": [], "nucleotide_overlap": [], "median_coverage": [], "mean_coverage": [], "reads_mapped": []}
+    # TODO: the iterations of this are slow. The iterations that have a large len(intervals) are particularly slow.
+    # TODO: it might be the unioning of all these intervals that's slow, or the population of the coverage array
+    # TODO: which is O(gene_length * len(intervals))
+    itr = 0
     for gene in unique_genes:
+        itr += 1
+        print(f"Analyzing gene: {itr}/{len(unique_genes)}")
         gene_df = found_genes_df[found_genes_df.gene_name == gene]
         # get overlap intervals
         interval_tuples = list(zip(gene_df.overlap_start, gene_df.overlap_end))
         # Convert these to intervals
         intervals = [interval[start, end] for start, end in interval_tuples]
-        #print(intervals)
         # take the union of all the intervals
         intervals_union = intervals[0]
         for intval in intervals[1:]:
@@ -50,12 +56,28 @@ def create_ground_truth(found_genes_df):
         gene_length = gene_end - gene_start + 1
         # for each location in the gene, get the coverage information
         coverage_array = np.zeros(gene_length)
-        for i in range(gene_length):
-            coverage_array[i] = sum((i+gene_start) in intval for intval in intervals)
+        # FIXME: this is slow, it's O(gene_length * len(intervals))
+        #for i in range(gene_length):
+        #    coverage_array[i] = sum((i+gene_start) in intval for intval in intervals)  # sum the coverage for each position in the gene (the array is True or False if that i position is covered)
+        for intval in intervals:
+            # Some of the intervals are singletons, so check these
+            left_end = int(intval.extrema[0][0])
+            try:
+                right_end = int(intval.extrema[1][0])
+            except IndexError:
+                right_end = left_end
+            coverage_array[(left_end - gene_start):(right_end - gene_start)] += 1
+
         median_coverage = np.median(coverage_array)
         mean_coverage = np.mean(coverage_array)
         # store the information in the dataframe
-        ground_truth_df.loc[len(ground_truth_df)] = [gene, gene_length, int(nucleotide_overlap), median_coverage, mean_coverage, int(reads_mapped)]
+        ground_truth_df_data["gene_name"].append(gene)
+        ground_truth_df_data["gene_length"].append(gene_length)
+        ground_truth_df_data["nucleotide_overlap"].append(nucleotide_overlap)
+        ground_truth_df_data["median_coverage"].append(median_coverage)
+        ground_truth_df_data["mean_coverage"].append(mean_coverage)
+        ground_truth_df_data["reads_mapped"].append(reads_mapped)
+    ground_truth_df = pd.DataFrame(ground_truth_df_data)
     return ground_truth_df
 
 
@@ -76,7 +98,7 @@ def interval_overlap(interval1, interval2):
         return start, end
     elif end > end_pos >= start >= start_pos:  # left side overlap
         return start, end_pos
-    elif start > end_pos: # no overlap
+    elif start > end_pos:  # no overlap
         return False
     elif start < start_pos and end > end_pos:  # proper superset overlap
         return start_pos, end_pos
@@ -122,6 +144,7 @@ def main():
     genome_dir_names = [x[0] for x in os.walk(database_dir)][1:]
     genome_names = [os.path.split(x)[-1] for x in genome_dir_names]
     # find the mapping files in each of the genome dirs
+    print("Finding mapping files...")
     mapping_files = []
     for i in range(len(genome_dir_names)):
         mapping_file = os.path.join(genome_dir_names[i], f"{genome_names[i]}_mapping.csv")
@@ -132,6 +155,7 @@ def main():
             mapping_files.append(mapping_file)
 
     # import all the mapping files
+    print("Importing mapping files...")
     mapping_dfs = []
     for mapping_file in mapping_files:
         mapping_df = mapping_dfs.append(pd.read_csv(mapping_file))
@@ -140,6 +164,7 @@ def main():
     #print(mapping_df)
 
     # import the simulation file
+    print("Importing simulation file...")
     sequence_headers = []
     with screed.open(simulation_file) as seqfile:
         for read in seqfile:
@@ -155,7 +180,9 @@ def main():
     # strand
     # bbstart - from the code, it looks like this is some internal coordinate used by bbtools
     # bbchrom - again, from code, seems like internal representation of chromosomes inside of bbtools’ code
+    print("Parsing headers...")
     simulation_df = pd.DataFrame(columns=["contig_id", "start", "end"])
+    simulation_data = {"contig_id": [], "start": [], "end": []}
     for header in sequence_headers:
         header_split = header.split("_")
         start = int(header_split[2])
@@ -163,46 +190,81 @@ def main():
         contig_id = "_".join(header_split[9:11])  # this assumes that the format of the simulation will not change
         contig_id = contig_id.split("$")[0]
         # add the row to the dataframe
-        simulation_df.loc[len(simulation_df)] = [contig_id, start, end]
+        simulation_data["contig_id"].append(contig_id)
+        simulation_data["start"].append(start)
+        simulation_data["end"].append(end)
+    simulation_df = pd.DataFrame(simulation_data)
+
 
     # create dataframe for output
-    output_df = pd.DataFrame(columns=["contig_id", "gene_name", "protein_id", "num_bases_overlap", "overlap_start", "overlap_end", "gene_start", "gene_end"])
+    output_df = pd.DataFrame(columns=["contig_id", "gene_name", "num_bases_overlap", "overlap_start", "overlap_end", "gene_start", "gene_end"])
     # iterate through the simulation dataframe
-    # TODO: this is where we can speed up the code
-    # Pre-compute the coverage array for each contig
-    # and/or parallelize over the simulation dataframe
+
+    # Create a couple of data structures that will make it faster to determine if a read overlaps a gene
+    print("Creating data structures for overlaps...")
+    contig_intervals = {}
+    contig_intervals_union = {}
+    for index, row in mapping_df.iterrows():
+        contig_id = row["contig_id"]
+        if contig_id not in contig_intervals:
+            contig_intervals[contig_id] = {}
+            contig_intervals_union[contig_id] = interval[0, 0]
+        gene_name = row["gene_name"]
+        if gene_name not in contig_intervals[contig_id]:
+            contig_intervals[contig_id][gene_name] = (row["start_position"], row["end_position"])
+            contig_intervals_union[contig_id] = contig_intervals_union[contig_id] | interval[row["start_position"], row["end_position"]]
+        else:
+            raise Exception("Duplicate gene name in mapping file!")
+    print("Finding overlaps...")
+    output_df_data = {"contig_id": [], "gene_name": [], "num_bases_overlap": [], "overlap_start": [], "overlap_end": [], "gene_start": [], "gene_end": []}
+    # iterate through the all the reads in the simulation file looking for overlaps to genes
     for i in range(len(simulation_df)):
+        if i % 1000 == 0:
+            print(f"On step: {i}/{len(simulation_df)}")
         # get the contig id
         contig_id = simulation_df.iloc[i]["contig_id"]
         # get the start and end positions of the read
         start = simulation_df.iloc[i]["start"]
         end = simulation_df.iloc[i]["end"]
-        #print(f"Analyzing contig {contig_id}: start {start} end {end}")
-        # get the mapping dataframe for the contig
-        contig_mapping_df = mapping_df[mapping_df["contig_id"] == contig_id]
-        # iterate through the mapping dataframe
-        for j in range(len(contig_mapping_df)):
-            # check if the read overlaps with this gene
-            gene_start = contig_mapping_df.iloc[j]["start_position"]
-            gene_end = contig_mapping_df.iloc[j]["end_position"]
-            overlap_interval = interval_overlap((start, end), (gene_start, gene_end))
-            if overlap_interval:
-                # get the gene name
-                gene_name = contig_mapping_df.iloc[j]["gene_name"]
-                # get the protein id
-                protein_id = contig_mapping_df.iloc[j]["protein_id"]
-                # get the number of bases that overlap
-                num_bases_overlap = overlap_interval[1] - overlap_interval[0] + 1
-                # get the overlap start and end positions
-                overlap_start = overlap_interval[0]
-                overlap_end = overlap_interval[1]
-                # add the row to the dataframe
-                output_df.loc[len(output_df)] = [contig_id, gene_name, protein_id, num_bases_overlap, overlap_start, overlap_end, gene_start, gene_end]
-                #print(f"Gene start {gene_start} end {gene_end}, read start {start} end {end}")
-                #print(f"Overlap start {overlap_start} end {overlap_end}")
+        # check if the start or then end of the read is within a gene region. Skip it if not.
+        if contig_id in contig_intervals:  # if there are no genes on this contig, skip it
+            # This assumes that the reads will always be shorter than the genes
+            if start not in contig_intervals_union[contig_id] and end not in contig_intervals_union[contig_id]:
+                continue
+        else:
+            continue
+        gene_names = contig_intervals[contig_id].keys()
+        # iterate through the gene names
+        if gene_names:
+            for gene_name in gene_names:
+                # get the start and end positions of the gene
+                gene_start = contig_intervals[contig_id][gene_name][0]
+                gene_end = contig_intervals[contig_id][gene_name][1]
+                overlap_interval = interval_overlap((start, end), (gene_start, gene_end))
+                if overlap_interval:
+                    # get the protein id
+                    # get the number of bases that overlap
+                    num_bases_overlap = overlap_interval[1] - overlap_interval[0] + 1
+                    # get the overlap start and end positions
+                    overlap_start = overlap_interval[0]
+                    overlap_end = overlap_interval[1]
+                    # add the information to the output dataframe
+                    output_df_data["contig_id"].append(contig_id)
+                    output_df_data["gene_name"].append(gene_name)
+                    output_df_data["num_bases_overlap"].append(num_bases_overlap)
+                    output_df_data["overlap_start"].append(overlap_start)
+                    output_df_data["overlap_end"].append(overlap_end)
+                    output_df_data["gene_start"].append(gene_start)
+                    output_df_data["gene_end"].append(gene_end)
+    print("Putting data in dataframe...")
+    output_df = pd.DataFrame(output_df_data)
+    #output_df.to_csv('/home/dkoslicki/Documents/KEGG_sketching_annotation/scripts/temp.csv', index=False)
+
     # write the output file
     # output_df.to_csv(output_file, index=False)
+    print("Summarizing gene coverage information...")
     ground_truth_df = create_ground_truth(output_df)
+    print("Writing output file...")
     ground_truth_df.to_csv(output_file, index=False)
 
 
