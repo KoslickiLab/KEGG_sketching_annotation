@@ -9,9 +9,9 @@ import tempfile
 from os.path import exists
 import multiprocessing
 import matplotlib.pyplot as plt
-
-bbtools_loc = os.path.abspath("../utils/bbmap")
-diamond_loc = os.path.abspath("../utils/")
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+bbtools_loc = os.path.abspath(f"{THIS_DIR}/../utils/bbmap")
+diamond_loc = os.path.abspath(f"{THIS_DIR}/../utils/")
 
 
 def run_simulation(reference_file, out_file, num_reads, len_reads=150, noisy=False, num_orgs=250):
@@ -357,8 +357,14 @@ def calculate_sourmash_performance(gather_file, ground_truth_file, filter_thresh
     performance['TP'] = len(sdf_TP)
     performance['FP'] = len(sdf_FP)
     performance['FN'] = len(sdf_FN)
-    performance['precision'] = performance['TP'] / float(performance['TP'] + performance['FP'])
-    performance['recall'] = performance['TP'] / float(performance['TP'] + performance['FN'])
+    if performance['TP'] + performance['FP'] == 0:
+        performance['precision'] = 0
+    else:
+        performance['precision'] = performance['TP'] / float(performance['TP'] + performance['FP'])
+    if performance['TP'] + performance['FN'] == 0:
+        performance['recall'] = 0
+    else:
+        performance['recall'] = performance['TP'] / float(performance['TP'] + performance['FN'])
     if performance['TP']:
         performance['F1'] = 2 * performance['precision'] * performance['recall'] / float(performance['precision'] + performance['recall'])
     else:
@@ -375,14 +381,16 @@ def calculate_sourmash_performance(gather_file, ground_truth_file, filter_thresh
     performance['corr_ave_abund'] = np.corrcoef(ave_abund, reads_mapped_div_gene_len)[0][1]
     L1_average_abund_reads_mapped_div_gene_len = np.sum(np.abs(ave_abund - reads_mapped_div_gene_len))
     performance['L1_average_abund_reads_mapped_div_gene_len'] = L1_average_abund_reads_mapped_div_gene_len
-    performance['percent_correct_predictions'] = len(sdf_TP) / float(len(sdf_TP) + len(sdf_FP))
+    if len(sdf_TP) + len(sdf_FP) == 0:
+        performance['percent_correct_predictions'] = 0
+    else:
+        performance['percent_correct_predictions'] = len(sdf_TP) / float(len(sdf_TP) + len(sdf_FP))
     performance['total_number_of_predictions'] = len(sdf_TP) + len(sdf_FP)
     # also record what filter threshold was used
     performance['filter_threshold'] = filter_threshold
     # put this in a dataframe
     performance_df = pd.DataFrame(performance, index=[0])
     return performance_df
-
 
 
 def check_sourmash_correlation(gather_file, ground_truth_file, corr_threshold=0.9):

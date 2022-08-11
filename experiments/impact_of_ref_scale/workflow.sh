@@ -18,7 +18,7 @@ kSize=7
 thresholdBP=100
 
 # download genomes
-$scriptDir/./get_reference_genomes.py -n $numGenomes -s $dataDir  -u
+#$scriptDir/./get_reference_genomes.py -n $numGenomes -s $dataDir  -u
 # create the genome reference database
 $scriptDir/./create_genome_ref_db.py $dataDir $genomeDatabase
 # create the mapping files required for the protein database
@@ -38,6 +38,6 @@ for refScale in 1 10 100 1000; do
         /usr/bin/time $scriptDir/./classify_sourmash.py -r $proteinDatabase -m $simulatedMetagenome -o $dataDir -k $kSize --ref_scale_size $refScale --query_scale_size $queryScale --query_translate -t $thresholdBP
         gatherFile="$dataDir/$(basename $simulatedMetagenome)_k_${kSize}_scale_${queryScale}.sig_$(basename $proteinDatabase)_k_${kSize}_scale_${refScale}.sig_gather.csv"
 #echo "gatherFile: $gatherFile"
-        $scriptDir/./calculate_sourmash_performance.py -g $dataDir/ground_truth.csv -s $gatherFile -o $dataDir/sourmash_performance_metrics.csv
+        $scriptDir/./calculate_sourmash_performance.py -g $dataDir/ground_truth.csv -s $gatherFile -o $dataDir/sourmash_performance_metrics_refScale_${refScale}_queryScale_${queryScale}.csv
     done
 done
