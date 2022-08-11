@@ -222,6 +222,7 @@ def calculate_sourmash_performance(gather_file, ground_truth_file, filter_thresh
     to the ground truth.
     From the check_sourmash_correlation method, it appears that:
      f_unique_weighted correlates with reads mapped, median, mean coverage, and nucleotide_overlap
+     reads mapped / gene length correlates with sourmash's average_abund and median_abund: corr=0.9957443813164701
 
     :param gather_file: the csv output from sourmash
     :param ground_truth_file: the ground truth file (output from find_genes_in_sim.py)
@@ -264,7 +265,7 @@ def calculate_sourmash_performance(gather_file, ground_truth_file, filter_thresh
     # subset the ground truth to only the ones in the gather results
     gdf_TP = gdf[gdf['gene_name'].isin(sgene_names)]  # subset the ground truth to concentrate on the ones in the gather results
     gdf_TP = gdf_TP.sort_values(by='gene_name')
-    metrics = ['TP', 'FP', 'FN', 'precision', 'recall', 'F1', 'corr', 'L1_f_unique_weighted_reads_mapped', 'percent_correct_predictions', 'total_number_of_predictions']
+    metrics = ['TP', 'FP', 'FN', 'precision', 'recall', 'F1', 'corr_reads_mapped', 'L1_f_unique_weighted_reads_mapped', 'corr_ave_abund', 'L1_average_abund_reads_mapped_div_gene_len', 'percent_correct_predictions', 'total_number_of_predictions']
     # calculate the performance metrics
     performance = dict()
     performance['TP'] = len(sdf_TP)
@@ -276,12 +277,18 @@ def calculate_sourmash_performance(gather_file, ground_truth_file, filter_thresh
         performance['F1'] = 2 * performance['precision'] * performance['recall'] / float(performance['precision'] + performance['recall'])
     else:
         performance['F1'] = 0
-    performance['corr'] = np.corrcoef(sdf_TP[sourmash_rel_abund_col], gdf_TP[ground_truth_rel_abund_col])[0][1]
+    performance['corr_reads_mapped'] = np.corrcoef(sdf_TP[sourmash_rel_abund_col], gdf_TP[ground_truth_rel_abund_col])[0][1]
     sdf_TP_vec = np.array(sdf_TP[sourmash_rel_abund_col].values)
     sdf_TP_vec = sdf_TP_vec / np.sum(sdf_TP_vec)
     gdf_TP_vec = np.array(gdf_TP[ground_truth_rel_abund_col].values)
     gdf_TP_vec = gdf_TP_vec / np.sum(gdf_TP_vec)
     performance['L1_f_unique_weighted_reads_mapped'] = np.sum(np.abs(sdf_TP_vec - gdf_TP_vec))
+    reads_mapped_div_gene_len = np.array(gdf_TP['reads_mapped'] / gdf_TP['gene_length'])
+    reads_mapped_div_gene_len = reads_mapped_div_gene_len / np.sum(reads_mapped_div_gene_len)
+    ave_abund = sdf_TP['average_abund'] / np.sum(sdf_TP['average_abund'])
+    performance['corr_ave_abund'] = np.corrcoef(ave_abund, reads_mapped_div_gene_len)[0][1]
+    L1_average_abund_reads_mapped_div_gene_len = np.sum(np.abs(ave_abund - reads_mapped_div_gene_len))
+    performance['L1_average_abund_reads_mapped_div_gene_len'] = L1_average_abund_reads_mapped_div_gene_len
     performance['percent_correct_predictions'] = len(sdf_TP) / float(len(sdf_TP) + len(sdf_FP))
     performance['total_number_of_predictions'] = len(sdf_TP) + len(sdf_FP)
     print(performance)
@@ -331,10 +338,17 @@ def check_sourmash_correlation(gather_file, ground_truth_file, corr_threshold=0.
                      'f_unique_weighted', 'average_abund', 'median_abund', 'std_abund',
                      'f_match_orig', 'unique_intersect_bp',
                      'gather_result_rank', 'remaining_bp']
+
     for gt_col in ground_truth_cols:
         for col in sourmash_cols:
             corr = np.corrcoef(sdf_TP[col], gdf_TP['reads_mapped'])[0][1]
             if corr > corr_threshold:
                 print(f"gt: {gt_col}, sm:{col}: corr={corr}")
 
-# TODO: calculate weighted stats. Need to understand what the difference columns in the sourmash gather results are actually returning
+    # also look for correlation between sourmash output and #reads mapped / gene_length
+
+    for col in sourmash_cols:
+        corr = np.corrcoef(sdf_TP[col], gdf_TP['reads_mapped'] / gdf_TP['gene_length'])[0][1]
+        if corr > corr_threshold:
+            print(f"gt: reads mapped / gene length, sm:{col}: corr={corr}")
+

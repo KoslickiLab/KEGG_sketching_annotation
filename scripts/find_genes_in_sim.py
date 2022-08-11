@@ -16,8 +16,8 @@ from utils.pyinterval.interval import interval
 def interval_length(intvals):
     length = 0
     for intval in intvals:
-        length += intval[1] - intval[0]
-    return length
+        length += intval[1] - intval[0] + 1
+    return int(length)
 
 
 def create_ground_truth(found_genes_df):
@@ -36,7 +36,7 @@ def create_ground_truth(found_genes_df):
     itr = 0
     for gene in unique_genes:
         itr += 1
-        print(f"Analyzing gene: {itr}/{len(unique_genes)}")
+        #print(f"Analyzing gene: {itr}/{len(unique_genes)}")
         gene_df = found_genes_df[found_genes_df.gene_name == gene]
         # get overlap intervals
         interval_tuples = list(zip(gene_df.overlap_start, gene_df.overlap_end))
@@ -219,8 +219,8 @@ def main():
     output_df_data = {"contig_id": [], "gene_name": [], "num_bases_overlap": [], "overlap_start": [], "overlap_end": [], "gene_start": [], "gene_end": []}
     # iterate through the all the reads in the simulation file looking for overlaps to genes
     for i in range(len(simulation_df)):
-        if i % 1000 == 0:
-            print(f"On step: {i}/{len(simulation_df)}")
+        #if i % 1000 == 0:
+        #    print(f"On step: {i}/{len(simulation_df)}")
         # get the contig id
         contig_id = simulation_df.iloc[i]["contig_id"]
         # get the start and end positions of the read
