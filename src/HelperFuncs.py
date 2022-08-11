@@ -243,11 +243,6 @@ def calculate_sourmash_performance(gather_file, ground_truth_file, filter_thresh
     # sort the ground truth by gene name, this will be the order that we stick with
     gdf = gdf.sort_values(by='gene_name')
 
-    # remove the infrequent genes from the ground truth and from sourmash
-    genes_removed = set(gdf[gdf['reads_mapped'] < filter_threshold].gene_name)
-    gdf = gdf[~gdf['gene_name'].isin(genes_removed)]
-    sdf = sdf[~sdf['name'].isin(genes_removed)]
-
     # grab the sourmash infered gene names
     sgene_names = list(sdf['name'])
     sgene_names = [x.split('|')[0] for x in sgene_names]
@@ -255,6 +250,12 @@ def calculate_sourmash_performance(gather_file, ground_truth_file, filter_thresh
     sdf['name'] = sgene_names
     ggene_names = list(gdf['gene_name'])
     greads_mapped = np.sum(list(gdf['reads_mapped']))
+
+    # remove the infrequent genes from the ground truth and from sourmash
+    genes_removed = set(gdf[gdf['reads_mapped'] < filter_threshold].gene_name)
+    gdf = gdf[~gdf['gene_name'].isin(genes_removed)]
+    sdf = sdf[~sdf['name'].isin(genes_removed)]
+
     # subset the gather results to concentrate on the ones in the ground truth
     sdf_TP = sdf[sdf['name'].isin(ggene_names)]  # true positives in sourmash
     sdf_TP = sdf_TP.sort_values(by='name')  # sort by gene name

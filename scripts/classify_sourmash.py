@@ -14,7 +14,7 @@ import warnings
 # for relative imports
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
-from src.HelperFuncs import make_sketches, run_sourmash_gather, check_extension
+from src.HelperFuncs import make_sketches, run_sourmash_gather, check_extension, calculate_sourmash_performance
 
 
 def main():
