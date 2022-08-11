@@ -18,7 +18,7 @@ kSize=7
 thresholdBP=100
 
 # download genomes
-#$scriptDir/./get_reference_genomes.py -n $numGenomes -s $dataDir  -u
+$scriptDir/./get_reference_genomes.py -n $numGenomes -s $dataDir  -u
 # create the genome reference database
 $scriptDir/./create_genome_ref_db.py $dataDir $genomeDatabase
 # create the mapping files required for the protein database
