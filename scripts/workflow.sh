@@ -41,4 +41,9 @@ thresholdBP=100  # this has the largest impact on FNs and FPs: setting it higher
 # Calculate sourmash performance metrics
 gatherFile="$dataDir/$(basename $simulatedMetagenome)_k_${kSize}_scale_${queryScale}.sig_$(basename $proteinDatabase)_k_${kSize}_scale_${refScale}.sig_gather.csv"
 #echo "gatherFile: $gatherFile"
-./calculate_sourmash_performance.py -g $dataDir/ground_truth.csv -s $gatherFile -o $dataDir/sourmash_performance_metrics.csv
+#./calculate_sourmash_performance.py -g $dataDir/ground_truth.csv -s $gatherFile -o $dataDir/sourmash_performance_metrics.csv
+
+# Run Diamond
+/usr/bin/time ./classify_diamond.py -r $proteinDatabase -m $simulatedMetagenome -o $dataDir
+diamondFile="$dataDir/$(basename $simulatedMetagenome)_$(basename $proteinDatabase).dmnd_matches.csv"
+echo "diamondFile: $diamondFile"

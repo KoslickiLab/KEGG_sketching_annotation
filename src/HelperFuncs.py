@@ -133,7 +133,6 @@ def run_sourmash_gather(query, database, out_file, sketch_type, num_results=None
     return
 
 
-
 def check_extension(file_name):
     """
     Checks the file extension to see if it's protein or dna
@@ -175,7 +174,10 @@ def run_diamond_blastx(query_file, database_file, out_file, num_threads=multipro
     :param query_file: Input FASTA/Q query file
     :param database_file: The database built with build_diamond_db
     :param out_file: The output tsv file. Format is:
-    qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore
+    qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore.
+    Or put more verbosely: # Fields: Query ID, Subject ID, Percentage of identical matches, Alignment length,
+    Number of mismatches, Number of gap openings, Start of alignment in query, End of alignment in query,
+    Start of alignment in subject, End of alignment in subject, Expected value, Bit score
     :param num_threads: Number of threads to run (default=number of CPU cores on the machine you are using)
     :return: none
     """
@@ -183,6 +185,12 @@ def run_diamond_blastx(query_file, database_file, out_file, num_threads=multipro
     res = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
     if res.returncode != 0:
         raise Exception(f"The command {cmd} exited with nonzero exit code {res.returncode}")
+    # put the header into the file
+    header = "qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue\tbitscore"
+    with open(out_file, 'r') as original:
+        data = original.read()
+    with open(out_file, 'w') as modified:
+        modified.write(f"{header}\n" + data)
     return
 
 
@@ -194,26 +202,30 @@ def parse_diamond_results(matches_file):
     b) the number of correct alignments (diamond aligned the read to the correct reference sequence)
     c) the number of incorrect alignments  (diamond aligned the read to the wrong reference sequence)
     """
-    df = pd.read_csv(matches_file, sep='\t', header=0,
-                       names=["qseqid", "sseqid", "pident", "length", "mismatch", "gapopen", "qstart", "qend", "sstart",
-                              "send", "evalue", "bitscore"])
-    query_names = list(df['qseqid'])
-    regex = r'\_\.\_([a-z]{3}:[a-zA-Z]\w+)'
-    regexc = re.compile(regex)
-    query_ids = [re.findall(regexc, x)[0] for x in query_names]
+    df = pd.read_csv(matches_file, sep='\t')
     ref_ids = [x.split('|')[0] for x in df['sseqid']]
-    if len(query_ids) != len(ref_ids):
-        raise Exception(f"Something went wrong: there are {len(query_ids)} query ids, but {len(ref_ids)} ref ids.")
-    inferred_ids = set()
-    n_correct_alignments = 0
-    n_incorrect_alignments = 0
-    for true_id, inf_id in zip(query_ids, ref_ids):
-        inferred_ids.add(inf_id)
-        if true_id == inf_id:
-            n_correct_alignments += 1
+    ref_ids_tally = Counter(ref_ids)
+    # also get the gene lengths
+    gene_lengths = [int(x.split('|')[-1]) - int(x.split('|')[-2]) + 1 for x in df['sseqid']]
+    bit_scores = df['bitscore']
+    ref_id_to_bit_score = dict()
+    # add all the bit scores up for each reference id
+    for i in range(len(ref_ids)):
+        if ref_ids[i] not in ref_id_to_bit_score:
+            ref_id_to_bit_score[ref_ids[i]] = bit_scores[i]
         else:
-            n_incorrect_alignments += 1
-    return inferred_ids, n_correct_alignments, n_incorrect_alignments
+            ref_id_to_bit_score[ref_ids[i]] += bit_scores[i]
+    # divide by the total number of reads to get the average bit score for each reference id
+    for ref_id in ref_id_to_bit_score:
+        ref_id_to_bit_score[ref_id] /= ref_ids_tally[ref_id]
+    id_to_length = dict(zip(ref_ids, gene_lengths))
+    data = {"ref_id": [], "num_reads": [], "ave_bit_score": [], "gene_length": []}
+    for ref_id in ref_ids_tally:
+        data["ref_id"].append(ref_id)
+        data["num_reads"].append(ref_ids_tally[ref_id])
+        data["gene_length"].append(id_to_length[ref_id])
+        data["ave_bit_score"].append(ref_id_to_bit_score[ref_id])
+    return pd.DataFrame(data)
 
 
 def calculate_sourmash_performance(gather_file, ground_truth_file, filter_threshold):

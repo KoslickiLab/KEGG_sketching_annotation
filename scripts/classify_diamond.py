@@ -14,8 +14,8 @@ import warnings
 # for relative imports
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
-from src.HelperFuncs import make_sketches, compute_rel_abundance, run_sourmash_gather, check_extension, \
-    calc_binary_stats_sourmash, build_diamond_db, run_diamond_blastx, calc_binary_stats_diamond
+from src.HelperFuncs import make_sketches, run_sourmash_gather, check_extension, \
+     build_diamond_db, run_diamond_blastx
 
 
 def main():
