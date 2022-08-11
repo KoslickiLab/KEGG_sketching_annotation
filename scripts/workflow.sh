@@ -30,11 +30,15 @@ thresholdBP=100  # this has the largest impact on FNs and FPs: setting it higher
 #./create_gene_ref_db.py "$dataDir/reference_genomes" $proteinDatabase
 
 # simulate a metagenome
-./simulate_metagenome.py -r $genomeDatabase -o $simulatedMetagenome -n $numReads -l $readLen --num_orgs $numGenes
+#./simulate_metagenome.py -r $genomeDatabase -o $simulatedMetagenome -n $numReads -l $readLen --num_orgs $numGenes
 
 # get the abundance estimates for the simulated metagenome
-./find_genes_in_sim.py --database_dir "$dataDir/reference_genomes" --simulation $simulatedMetagenome --output_file "$dataDir/ground_truth.csv"
+#./find_genes_in_sim.py --database_dir "$dataDir/reference_genomes" --simulation $simulatedMetagenome --output_file "$dataDir/ground_truth.csv"
 
 # Run sourmash
-/usr/bin/time ./classify_sourmash.py -r $proteinDatabase -m $simulatedMetagenome -o $dataDir -k $kSize --ref_scale_size $refScale --query_scale_size $queryScale --query_translate -t $thresholdBP
+#/usr/bin/time ./classify_sourmash.py -r $proteinDatabase -m $simulatedMetagenome -o $dataDir -k $kSize --ref_scale_size $refScale --query_scale_size $queryScale --query_translate -t $thresholdBP
 
+# Calculate sourmash performance metrics
+gatherFile="$dataDir/$(basename $simulatedMetagenome)_k_${kSize}_scale_${queryScale}.sig_$(basename $proteinDatabase)_k_${kSize}_scale_${refScale}.sig_gather.csv"
+#echo "gatherFile: $gatherFile"
+./calculate_sourmash_performance.py -g $dataDir/ground_truth.csv -s $gatherFile -o $dataDir/sourmash_performance_metrics.csv
