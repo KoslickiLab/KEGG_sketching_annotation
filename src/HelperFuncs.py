@@ -219,14 +219,87 @@ def parse_diamond_results(matches_file):
     for ref_id in ref_id_to_bit_score:
         ref_id_to_bit_score[ref_id] /= ref_ids_tally[ref_id]
     id_to_length = dict(zip(ref_ids, gene_lengths))
-    data = {"ref_id": [], "num_reads": [], "ave_bit_score": [], "gene_length": []}
+    data = {"name": [], "num_reads": [], "ave_bit_score": [], "gene_length": []}
     for ref_id in ref_ids_tally:
-        data["ref_id"].append(ref_id)
+        data["name"].append(ref_id)
         data["num_reads"].append(ref_ids_tally[ref_id])
         data["gene_length"].append(id_to_length[ref_id])
         data["ave_bit_score"].append(ref_id_to_bit_score[ref_id])
     return pd.DataFrame(data)
 
+
+def calculate_diamond_performance(diamond_file, ground_truth_file, filter_threshold, bitscore_threshold):
+    """
+    This function will parse the output from Diamond and turn it into a functional profile, and then calculate
+    performance statistics similar to calculate_sourmash_performance
+    :param diamond_file: the matches.csv file that's output from ./classify_diamond.py
+    :param ground_truth_file: The ground_truth.csv file that's output from find_genes_in_sim.py
+    :param filter_threshold: Ignore genes in the ground truth that have fewer than filter_threshold reads mapping
+    to them. Also remove these genes from Diamond.
+    :param bitscore_threshold: Ignore Diamond entries that have a bit score less than bitscore_threshold
+    :return: dataframe
+    """
+    # check if files exist
+    if not exists(diamond_file):
+        raise Exception(f"{diamond_file} does not exist")
+    if not exists(ground_truth_file):
+        raise Exception(f"{ground_truth_file} does not exist")
+    # parse the DIAMOND output file
+    ddf = parse_diamond_results(diamond_file)
+    # parse the ground truth file
+    gdf = pd.read_csv(ground_truth_file)
+    # filter out genes that are too short
+    genes_removed = set(gdf[gdf['reads_mapped'] < filter_threshold].gene_name)
+    gdf = gdf[~gdf['gene_name'].isin(genes_removed)]
+    ddf = ddf[~ddf['name'].isin(genes_removed)]
+    # filter out genes that have a bit score less than the threshold
+    ddf = ddf[ddf['ave_bit_score'] >= bitscore_threshold]
+    # Get gene names
+    ggene_names = gdf.gene_name
+    dgene_names = ddf.name
+    # sort everything by gene name
+    gdf = gdf.sort_values(by='gene_name')
+    # get binary data frames
+    ddf_TP = ddf[ddf['name'].isin(ggene_names)]  # true positives in sourmash
+    ddf_TP = ddf_TP.sort_values(by='name')  # sort by gene name
+    ddf_FP = ddf[~ddf['name'].isin(ggene_names)]  # false positives in sourmash
+    ddf_FN = gdf[~gdf['gene_name'].isin(dgene_names)]  # false negatives (ones in ground truth that aren't in sourmash)
+    gdf_TP = gdf[gdf['gene_name'].isin(dgene_names)]  # subset the ground truth to concentrate on the ones in the gather results
+    gdf_TP = gdf_TP.sort_values(by='gene_name')
+    metrics = ['TP', 'FP', 'FN', 'precision', 'recall', 'F1', 'corr_reads_mapped', 'L1_reads_mapped',
+               'corr_reads_mapped_div_gene_len', 'L1_reads_mapped_div_gene_len', 'percent_correct_predictions', 'total_number_of_predictions']
+    # calculate the performance metrics
+    performance = dict()
+    performance['TP'] = len(ddf_TP)
+    performance['FP'] = len(ddf_FP)
+    performance['FN'] = len(ddf_FN)
+    performance['precision'] = performance['TP'] / float(performance['TP'] + performance['FP'])
+    performance['recall'] = performance['TP'] / float(performance['TP'] + performance['FN'])
+    if performance['TP']:
+        performance['F1'] = 2 * performance['precision'] * performance['recall'] / float(
+            performance['precision'] + performance['recall'])
+    else:
+        performance['F1'] = 0
+    performance['corr_reads_mapped'] = np.corrcoef(ddf_TP['num_reads'], gdf_TP['reads_mapped'])[0][1]
+    ddf_TP_vec = np.array(ddf_TP['num_reads'].values)
+    ddf_TP_vec = ddf_TP_vec / np.sum(ddf_TP_vec)
+    gdf_TP_vec = np.array(gdf_TP['reads_mapped'].values)
+    gdf_TP_vec = gdf_TP_vec / np.sum(gdf_TP_vec)
+    performance['L1_reads_mapped'] = np.sum(np.abs(ddf_TP_vec - gdf_TP_vec))
+    reads_mapped_div_gene_len = np.array(gdf_TP['reads_mapped'] / gdf_TP['gene_length'])
+    reads_mapped_div_gene_len = reads_mapped_div_gene_len / np.sum(reads_mapped_div_gene_len)
+    pred_reads_mapped_div_gene_len = np.array(ddf_TP['num_reads'] / ddf_TP['gene_length'])
+    pred_reads_mapped_div_gene_len = pred_reads_mapped_div_gene_len / np.sum(pred_reads_mapped_div_gene_len)
+    performance['corr_reads_mapped_div_gene_len'] = np.corrcoef(pred_reads_mapped_div_gene_len, reads_mapped_div_gene_len)[0][1]
+    L1_average_abund_reads_mapped_div_gene_len = np.sum(np.abs(pred_reads_mapped_div_gene_len - reads_mapped_div_gene_len))
+    performance['L1_reads_mapped_div_gene_len'] = L1_average_abund_reads_mapped_div_gene_len
+    performance['percent_correct_predictions'] = len(ddf_TP) / float(len(ddf_TP) + len(ddf_FP))
+    performance['total_number_of_predictions'] = len(ddf_TP) + len(ddf_FP)
+    # also record what filter threshold was used
+    performance['filter_threshold'] = filter_threshold
+    # put this in a dataframe
+    performance_df = pd.DataFrame(performance, index=[0])
+    return performance_df
 
 def calculate_sourmash_performance(gather_file, ground_truth_file, filter_threshold):
     """
