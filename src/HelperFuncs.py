@@ -273,8 +273,14 @@ def calculate_diamond_performance(diamond_file, ground_truth_file, filter_thresh
     performance['TP'] = len(ddf_TP)
     performance['FP'] = len(ddf_FP)
     performance['FN'] = len(ddf_FN)
-    performance['precision'] = performance['TP'] / float(performance['TP'] + performance['FP'])
-    performance['recall'] = performance['TP'] / float(performance['TP'] + performance['FN'])
+    if float(performance['TP'] + performance['FP']) > 0:
+        performance['precision'] = performance['TP'] / float(performance['TP'] + performance['FP'])
+    else:
+        performance['precision'] = 0
+    if float(performance['TP'] + performance['FN']) > 0:
+        performance['recall'] = performance['TP'] / float(performance['TP'] + performance['FN'])
+    else:
+        performance['recall'] = 0
     if performance['TP']:
         performance['F1'] = 2 * performance['precision'] * performance['recall'] / float(
             performance['precision'] + performance['recall'])
@@ -293,7 +299,10 @@ def calculate_diamond_performance(diamond_file, ground_truth_file, filter_thresh
     performance['corr_reads_mapped_div_gene_len'] = np.corrcoef(pred_reads_mapped_div_gene_len, reads_mapped_div_gene_len)[0][1]
     L1_average_abund_reads_mapped_div_gene_len = np.sum(np.abs(pred_reads_mapped_div_gene_len - reads_mapped_div_gene_len))
     performance['L1_reads_mapped_div_gene_len'] = L1_average_abund_reads_mapped_div_gene_len
-    performance['percent_correct_predictions'] = len(ddf_TP) / float(len(ddf_TP) + len(ddf_FP))
+    if float(len(ddf_TP) + len(ddf_FP)) > 0:
+        performance['percent_correct_predictions'] = len(ddf_TP) / float(len(ddf_TP) + len(ddf_FP))
+    else:
+        performance['percent_correct_predictions'] = 0
     performance['total_number_of_predictions'] = len(ddf_TP) + len(ddf_FP)
     # also record what filter threshold was used
     performance['filter_threshold'] = filter_threshold
