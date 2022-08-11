@@ -244,9 +244,9 @@ def calculate_sourmash_performance(gather_file, ground_truth_file, filter_thresh
     gdf = gdf.sort_values(by='gene_name')
 
     # remove the infrequent genes from the ground truth and from sourmash
-    gdf = gdf[gdf['reads_mapped'] >= filter_threshold]
-    # TODO: we may want to remove these from the sourmash results to, since otherwise it could artificially increase the FP rate
-
+    genes_removed = set(gdf[gdf['reads_mapped'] < filter_threshold].gene_name)
+    gdf = gdf[~gdf['gene_name'].isin(genes_removed)]
+    sdf = sdf[~sdf['name'].isin(genes_removed)]
 
     # grab the sourmash infered gene names
     sgene_names = list(sdf['name'])
@@ -260,8 +260,8 @@ def calculate_sourmash_performance(gather_file, ground_truth_file, filter_thresh
     sdf_TP = sdf_TP.sort_values(by='name')  # sort by gene name
     sdf_FP = sdf[~sdf['name'].isin(ggene_names)]  # false positives in sourmash
     sdf_FN = gdf[~gdf['gene_name'].isin(sgene_names)]  # false negatives (ones in ground truth that aren't in sourmash)
-    print(f"Out of {len(sdf)} sourmash results, TP={len(sdf_TP)} are in the ground truth, FP={len(sdf_FP)} are not, "
-          f"and there are FN={len(sdf_FN)} in the ground truth that are not in the sourmash results")
+    #print(f"Out of {len(sdf)} sourmash results, TP={len(sdf_TP)} are in the ground truth, FP={len(sdf_FP)} are not, "
+    #      f"and there are FN={len(sdf_FN)} in the ground truth that are not in the sourmash results")
     # subset the ground truth to only the ones in the gather results
     gdf_TP = gdf[gdf['gene_name'].isin(sgene_names)]  # subset the ground truth to concentrate on the ones in the gather results
     gdf_TP = gdf_TP.sort_values(by='gene_name')
@@ -291,9 +291,12 @@ def calculate_sourmash_performance(gather_file, ground_truth_file, filter_thresh
     performance['L1_average_abund_reads_mapped_div_gene_len'] = L1_average_abund_reads_mapped_div_gene_len
     performance['percent_correct_predictions'] = len(sdf_TP) / float(len(sdf_TP) + len(sdf_FP))
     performance['total_number_of_predictions'] = len(sdf_TP) + len(sdf_FP)
-    print(performance)
-    # TODO: decide if we want just these metrics, or if we want to iterate over a bunch of filter_threshold
-    # TODO: so just print these for now
+    # also record what filter threshold was used
+    performance['filter_threshold'] = filter_threshold
+    # put this in a dataframe
+    performance_df = pd.DataFrame(performance, index=[0])
+    return performance_df
+
 
 
 def check_sourmash_correlation(gather_file, ground_truth_file, corr_threshold=0.9):
