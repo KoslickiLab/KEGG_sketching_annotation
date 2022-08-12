@@ -14,7 +14,7 @@ import warnings
 # for relative imports
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
-from src.HelperFuncs import make_sketches, compute_rel_abundance, run_sourmash_gather, check_extension, calc_binary_stats_sourmash
+from src.HelperFuncs import make_sketches, run_sourmash_gather, check_extension, calculate_sourmash_performance
 
 
 def main():
@@ -76,17 +76,6 @@ def main():
     #warnings.warn(f"Sketch file {query_sketch_file} does not exist, creating it now.")
     if not reuse_query_sketch:
         make_sketches(ksize, query_scale, metagenome_file, query_sketch_type, out_dir, per_record=False)
-    # check if the abundances have been calculated from the simulation
-    rel_abund_file = f"{metagenome_file}.abund"
-    gt_rel_abund = Counter()
-    if not exists(rel_abund_file):
-        gt_rel_abund = compute_rel_abundance(metagenome_file)
-    # otherwise read it in
-    else:
-        with open(rel_abund_file, 'r') as fid:
-            for line in fid.readlines():
-                id, count = line.strip().split('\t')
-                gt_rel_abund[id] = count
     # Then run sourmash gather
     gather_out_file = os.path.join(out_dir, f"{os.path.basename(query_sketch_file)}_{os.path.basename(ref_sketch_file)}_gather.csv")
     if query_translate:
@@ -96,11 +85,10 @@ def main():
         run_sourmash_gather(query_sketch_file, ref_sketch_file, gather_out_file, query_sketch_type, num_results=num_res,
                             threshold_bp=threshold_bp, quiet=False)
     # And calculate the results
-    stats = calc_binary_stats_sourmash(rel_abund_file, gather_out_file)
-    print(stats)
+    #stats = calc_binary_stats_sourmash(rel_abund_file, gather_out_file)
+    # TODO: use the find_genes_in_sim.py script to calculate the results
+    # print(stats)
 
 
 if __name__ == "__main__":
-    # Example of running it as a script from the script dir:
-    # ./classify_and_report_sourmash.py -r ../test_data/input/kegg_genes_KO.fna -m ../test_data/output/test_simulation.fq -o ../test_data/output/ -k 21 -t 100 -n 100 --ref_scale_size 100 --query_scale_size 100
     main()

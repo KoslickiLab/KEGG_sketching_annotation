@@ -14,8 +14,8 @@ import warnings
 # for relative imports
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
-from src.HelperFuncs import make_sketches, compute_rel_abundance, run_sourmash_gather, check_extension, \
-    calc_binary_stats_sourmash, build_diamond_db, run_diamond_blastx, calc_binary_stats_diamond
+from src.HelperFuncs import make_sketches, run_sourmash_gather, check_extension, \
+     build_diamond_db, run_diamond_blastx
 
 
 def main():
@@ -43,9 +43,10 @@ def main():
     out_file = os.path.join(out_dir, f"{os.path.basename(metagenome_file)}_{os.path.basename(ref_db)}_matches.csv")
     run_diamond_blastx(metagenome_file, ref_db, out_file)
     # Calculate the results
-    stats = calc_binary_stats_diamond(metagenome_file, out_file)
+    # TODO: use the find_genes_in_sim.py script to calculate the results
+    #stats = calc_binary_stats_diamond(metagenome_file, out_file)
     # Print the results
-    print(stats)
+    #print(stats)
 
 if __name__ == "__main__":
     # Example of running it as a script from the script dir:
