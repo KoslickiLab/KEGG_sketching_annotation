@@ -8,15 +8,16 @@ import pathlib
 import tempfile
 from os.path import exists
 import multiprocessing
-
-bbtools_loc = os.path.abspath("../utils/bbmap")
-diamond_loc = os.path.abspath("../utils/")
+import matplotlib.pyplot as plt
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+bbtools_loc = os.path.abspath(f"{THIS_DIR}/../utils/bbmap")
+diamond_loc = os.path.abspath(f"{THIS_DIR}/../utils/")
 
 
 def run_simulation(reference_file, out_file, num_reads, len_reads=150, noisy=False, num_orgs=250):
     """
     This function runs a simulation using bbtools "randomreads.sh"
-    :param reference_file: The input sequences from which to make a metagenome TODO: make this auto downsample since currently it uses the whole set
+    :param reference_file: The input sequences from which to make a metagenome
     :param out_file: the name of the output simulation (must be a FASTQ file, so ending in fq or fastq)
     :param num_reads: number of reads to simulate
     :param len_reads: how long the reads are (default is 150bp)
@@ -40,8 +41,9 @@ def run_simulation(reference_file, out_file, num_reads, len_reads=150, noisy=Fal
         illumina_names = "f"
         overwrite = "t"
         metagenome = "t"
+        banns = "t"
         # Note: reads by default are exactly 150bp long, not paired
-        cmd += f"simplenames={simple_names} overwrite={overwrite} illuminanames={illumina_names} metagenome={metagenome} "
+        cmd += f"simplenames={simple_names} overwrite={overwrite} illuminanames={illumina_names} metagenome={metagenome} banns={banns} "
         if noisy:
             # TODO: hard code these for now, look up realistic values later
             snprate = 0.01
@@ -57,24 +59,6 @@ def run_simulation(reference_file, out_file, num_reads, len_reads=150, noisy=Fal
         if res.returncode != 0:
             raise Exception(f"The command {cmd} exited with nonzero exit code {res.returncode}")
     return
-
-
-def compute_rel_abundance(simulation_fq_file):
-    """
-    This helper function will find the true relative abundances of the sequences in the simulation
-    :param simulation_fq_file: The bbmap simulated metagenome
-    :return: a Counter object that contains the sequence identifiers and their counts in the simulation
-    """
-    # This assumes that the sequences are labeled as _._[three lower case letters}:{mixed case}_{integer}|
-    #regex = r'\_\.\_([a-z]{3}:[a-zA-Z]\w+)'
-    # Looks like the labels changed in bbmap v3.0.0, this is now _._[two lower case letters]_{mixed case}_{integer}|
-    regex = r'\_\.\_([a-zA-Z]{2}_[a-zA-Z]\w+)'
-    contents = open(simulation_fq_file, 'r').read()
-    matches = re.findall(regex, contents)
-    matches_tally = Counter(matches)
-    print(f"I found {len(matches_tally)} unique matches totalling {np.sum(list(matches_tally.values()))} total matches "
-          f"with the most frequent one occurring {np.max(list(matches_tally.values()))} times")
-    return matches_tally
 
 
 def make_sketches(ksize, scale_factor, file_name, sketch_type, out_dir, per_record=False):
@@ -120,9 +104,9 @@ def run_sourmash_gather(query, database, out_file, sketch_type, num_results=None
     :param threshold_bp: int, stop the algorithm once the overlap is below this many base pairs
     :return:
     """
-    ignore_abundance = True
+    ignore_abundance = False
     estimate_ani_ci = True
-    no_prefetch = True
+    no_prefetch = False  # if set to true, this will disable the prefetch step. This will result in a much slower execution since prefetch does a pre-filtering step to select only database entries relevant to the sample
     if sketch_type not in ['aa', 'nt', 'protein', 'dna']:
         raise Exception(f"sketch type must be one of aa or protein (amino acid) or nt or dna (nucleotide). Provided value was {sketch_type}")
     cmd = f"sourmash gather -o {out_file} "
@@ -147,57 +131,6 @@ def run_sourmash_gather(query, database, out_file, sketch_type, num_results=None
     if res.returncode != 0:
         raise Exception(f"The command {cmd} exited with nonzero exit code {res.returncode}")
     return
-
-
-def return_unique_gather_hits(gather_out_file):
-    """
-    Takes a sourmash gather csv and returns the unique hits/identifiers in it
-    :param gather_out_file: csv file from sourmash gather -o
-    :return: a list of unique gene identifiers
-    """
-    if not os.path.exists(gather_out_file):
-        raise Exception(f"File {gather_out_file} does not exist")
-    df = pd.read_csv(gather_out_file)
-    names = list(df['name'])
-    name_ids = [x.split('|')[0] for x in names]
-    name_ids_unique = set(name_ids)
-    return list(name_ids_unique)
-
-
-def calc_binary_stats_sourmash(simulation_file, gather_out_file):
-    """
-    This function takes the simulation fastq file and the gather csv out file and calculates
-    binary statistics from it: a dict with keys TP, FP, FN, precision, recall, F1.
-    If you provide it a *.abund file, it just reads it as is
-    :param simulation_file: Fastq file that contains the simulated reads, or relative abundances already
-    :param gather_out_file: the results of running sourmash gather on those simulated reads
-    :return: dict
-    """
-    # If the gt results are precomputed, just read them in
-    simulation_gene_ids = set()
-    ext = pathlib.Path(simulation_file).suffix
-    # If the abund was passed, just read it in
-    if ext == '.abund':
-        with open(f"{simulation_file}", 'r') as fid:
-            for line in fid.readlines():
-                ident, count = line.strip().split('\t')
-                simulation_gene_ids.add(ident)
-    elif ext == '.fq':
-        simulation_gene_ids = set(compute_rel_abundance(simulation_file).keys())
-    else:
-        raise Exception(f"Unknown file extension {ext}. Must be either fq or abund")
-    gather_gene_ids = set(return_unique_gather_hits(gather_out_file))
-    stats = dict()
-    stats['TP'] = len(gather_gene_ids.intersection(simulation_gene_ids))
-    stats['FP'] = len(gather_gene_ids.difference(simulation_gene_ids))
-    stats['FN'] = len(simulation_gene_ids.difference(gather_gene_ids))
-    stats['precision'] = stats['TP'] / float(stats['TP'] + stats['FP'])
-    stats['recall'] = stats['TP'] / float(stats['TP'] + stats['FN'])
-    if stats['TP']:
-        stats['F1'] = 2 * stats['precision'] * stats['recall'] / float(stats['precision'] + stats['recall'])
-    else:
-        stats['F1'] = 0
-    return stats
 
 
 def check_extension(file_name):
@@ -241,7 +174,10 @@ def run_diamond_blastx(query_file, database_file, out_file, num_threads=multipro
     :param query_file: Input FASTA/Q query file
     :param database_file: The database built with build_diamond_db
     :param out_file: The output tsv file. Format is:
-    qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore
+    qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore.
+    Or put more verbosely: # Fields: Query ID, Subject ID, Percentage of identical matches, Alignment length,
+    Number of mismatches, Number of gap openings, Start of alignment in query, End of alignment in query,
+    Start of alignment in subject, End of alignment in subject, Expected value, Bit score
     :param num_threads: Number of threads to run (default=number of CPU cores on the machine you are using)
     :return: none
     """
@@ -249,6 +185,12 @@ def run_diamond_blastx(query_file, database_file, out_file, num_threads=multipro
     res = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
     if res.returncode != 0:
         raise Exception(f"The command {cmd} exited with nonzero exit code {res.returncode}")
+    # put the header into the file
+    header = "qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue\tbitscore"
+    with open(out_file, 'r') as original:
+        data = original.read()
+    with open(out_file, 'w') as modified:
+        modified.write(f"{header}\n" + data)
     return
 
 
@@ -260,69 +202,259 @@ def parse_diamond_results(matches_file):
     b) the number of correct alignments (diamond aligned the read to the correct reference sequence)
     c) the number of incorrect alignments  (diamond aligned the read to the wrong reference sequence)
     """
-    df = pd.read_csv(matches_file, sep='\t', header=0,
-                       names=["qseqid", "sseqid", "pident", "length", "mismatch", "gapopen", "qstart", "qend", "sstart",
-                              "send", "evalue", "bitscore"])
-    query_names = list(df['qseqid'])
-    regex = r'\_\.\_([a-z]{3}:[a-zA-Z]\w+)'
-    regexc = re.compile(regex)
-    query_ids = [re.findall(regexc, x)[0] for x in query_names]
+    df = pd.read_csv(matches_file, sep='\t')
     ref_ids = [x.split('|')[0] for x in df['sseqid']]
-    if len(query_ids) != len(ref_ids):
-        raise Exception(f"Something went wrong: there are {len(query_ids)} query ids, but {len(ref_ids)} ref ids.")
-    inferred_ids = set()
-    n_correct_alignments = 0
-    n_incorrect_alignments = 0
-    for true_id, inf_id in zip(query_ids, ref_ids):
-        inferred_ids.add(inf_id)
-        if true_id == inf_id:
-            n_correct_alignments += 1
+    ref_ids_tally = Counter(ref_ids)
+    # also get the gene lengths
+    gene_lengths = [int(x.split('|')[-1]) - int(x.split('|')[-2]) + 1 for x in df['sseqid']]
+    bit_scores = df['bitscore']
+    ref_id_to_bit_score = dict()
+    # add all the bit scores up for each reference id
+    for i in range(len(ref_ids)):
+        if ref_ids[i] not in ref_id_to_bit_score:
+            ref_id_to_bit_score[ref_ids[i]] = bit_scores[i]
         else:
-            n_incorrect_alignments += 1
-    return inferred_ids, n_correct_alignments, n_incorrect_alignments
+            ref_id_to_bit_score[ref_ids[i]] += bit_scores[i]
+    # divide by the total number of reads to get the average bit score for each reference id
+    for ref_id in ref_id_to_bit_score:
+        ref_id_to_bit_score[ref_id] /= ref_ids_tally[ref_id]
+    id_to_length = dict(zip(ref_ids, gene_lengths))
+    data = {"name": [], "num_reads": [], "ave_bit_score": [], "gene_length": []}
+    for ref_id in ref_ids_tally:
+        data["name"].append(ref_id)
+        data["num_reads"].append(ref_ids_tally[ref_id])
+        data["gene_length"].append(id_to_length[ref_id])
+        data["ave_bit_score"].append(ref_id_to_bit_score[ref_id])
+    return pd.DataFrame(data)
 
 
-def calc_binary_stats_diamond(simulation_file, matches_file):
+def calculate_diamond_performance(diamond_file, ground_truth_file, filter_threshold, bitscore_threshold):
     """
-    This calculates the binary statistics (from a pure "gene present/absent" perspective) for the performance of DIAMOND
-    on simulated data
-    :param simulation_file: the simulation fastq file on which diamond was run
-    :param matches_file: the output from diamond
-    :return: dict (with stats in it)
+    This function will parse the output from Diamond and turn it into a functional profile, and then calculate
+    performance statistics similar to calculate_sourmash_performance
+    :param diamond_file: the matches.csv file that's output from ./classify_diamond.py
+    :param ground_truth_file: The ground_truth.csv file that's output from find_genes_in_sim.py
+    :param filter_threshold: Ignore genes in the ground truth that have fewer than filter_threshold reads mapping
+    to them. Also remove these genes from Diamond.
+    :param bitscore_threshold: Ignore Diamond entries that have a bit score less than bitscore_threshold
+    :return: dataframe
     """
-    # If the gt results are precomputed, just read them in
-    simulation_gene_ids = set()
-    ext = pathlib.Path(simulation_file).suffix
-    # If the abund was passed, just read it in
-    if ext == '.abund':
-        with open(f"{simulation_file}", 'r') as fid:
-            for line in fid.readlines():
-                ident, count = line.strip().split('\t')
-                simulation_gene_ids.add(ident)
-    elif ext == '.fq':
-        simulation_gene_ids = set(compute_rel_abundance(simulation_file).keys())
+    # check if files exist
+    if not exists(diamond_file):
+        raise Exception(f"{diamond_file} does not exist")
+    if not exists(ground_truth_file):
+        raise Exception(f"{ground_truth_file} does not exist")
+    # parse the DIAMOND output file
+    ddf = parse_diamond_results(diamond_file)
+    # parse the ground truth file
+    gdf = pd.read_csv(ground_truth_file)
+    # filter out genes that are too short
+    genes_removed = set(gdf[gdf['reads_mapped'] < filter_threshold].gene_name)
+    gdf = gdf[~gdf['gene_name'].isin(genes_removed)]
+    ddf = ddf[~ddf['name'].isin(genes_removed)]
+    # filter out genes that have a bit score less than the threshold
+    ddf = ddf[ddf['ave_bit_score'] >= bitscore_threshold]
+    # Get gene names
+    ggene_names = gdf.gene_name
+    dgene_names = ddf.name
+    # sort everything by gene name
+    gdf = gdf.sort_values(by='gene_name')
+    # get binary data frames
+    ddf_TP = ddf[ddf['name'].isin(ggene_names)]  # true positives in sourmash
+    ddf_TP = ddf_TP.sort_values(by='name')  # sort by gene name
+    ddf_FP = ddf[~ddf['name'].isin(ggene_names)]  # false positives in sourmash
+    ddf_FN = gdf[~gdf['gene_name'].isin(dgene_names)]  # false negatives (ones in ground truth that aren't in sourmash)
+    gdf_TP = gdf[gdf['gene_name'].isin(dgene_names)]  # subset the ground truth to concentrate on the ones in the gather results
+    gdf_TP = gdf_TP.sort_values(by='gene_name')
+    metrics = ['TP', 'FP', 'FN', 'precision', 'recall', 'F1', 'corr_reads_mapped', 'L1_reads_mapped',
+               'corr_reads_mapped_div_gene_len', 'L1_reads_mapped_div_gene_len', 'percent_correct_predictions', 'total_number_of_predictions']
+    # calculate the performance metrics
+    performance = dict()
+    performance['TP'] = len(ddf_TP)
+    performance['FP'] = len(ddf_FP)
+    performance['FN'] = len(ddf_FN)
+    if float(performance['TP'] + performance['FP']) > 0:
+        performance['precision'] = performance['TP'] / float(performance['TP'] + performance['FP'])
     else:
-        raise Exception(f"Unknown file extension {ext}. Must be either fq or abund")
-    diamond_gene_ids, n_correct_alignments, n_incorrect_alignments = parse_diamond_results(matches_file)
-    diamond_gene_ids = set(diamond_gene_ids)
-    stats = dict()
-    stats['TP'] = len(diamond_gene_ids.intersection(simulation_gene_ids))
-    stats['FP'] = len(diamond_gene_ids.difference(simulation_gene_ids))
-    stats['FN'] = len(simulation_gene_ids.difference(diamond_gene_ids))
-    stats['precision'] = stats['TP'] / float(stats['TP'] + stats['FP'])
-    stats['recall'] = stats['TP'] / float(stats['TP'] + stats['FN'])
-    if stats['TP']:
-        stats['F1'] = 2 * stats['precision'] * stats['recall'] / float(stats['precision'] + stats['recall'])
+        performance['precision'] = 0
+    if float(performance['TP'] + performance['FN']) > 0:
+        performance['recall'] = performance['TP'] / float(performance['TP'] + performance['FN'])
     else:
-        stats['F1'] = 0
-    stats['Percent correct alignments'] = n_correct_alignments / float(n_correct_alignments + n_incorrect_alignments)
-    stats['Total number of alignments'] = n_correct_alignments + n_incorrect_alignments
-    cmd = f"wc -l {simulation_file}"
-    res = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
-    stats['Total number of sequences'] = int(res.stdout.split()[0]) / 4
-    return stats
+        performance['recall'] = 0
+    if performance['TP']:
+        performance['F1'] = 2 * performance['precision'] * performance['recall'] / float(
+            performance['precision'] + performance['recall'])
+    else:
+        performance['F1'] = 0
+    performance['corr_reads_mapped'] = np.corrcoef(ddf_TP['num_reads'], gdf_TP['reads_mapped'])[0][1]
+    ddf_TP_vec = np.array(ddf_TP['num_reads'].values)
+    ddf_TP_vec = ddf_TP_vec / np.sum(ddf_TP_vec)
+    gdf_TP_vec = np.array(gdf_TP['reads_mapped'].values)
+    gdf_TP_vec = gdf_TP_vec / np.sum(gdf_TP_vec)
+    performance['L1_reads_mapped'] = np.sum(np.abs(ddf_TP_vec - gdf_TP_vec))
+    reads_mapped_div_gene_len = np.array(gdf_TP['reads_mapped'] / gdf_TP['gene_length'])
+    reads_mapped_div_gene_len = reads_mapped_div_gene_len / np.sum(reads_mapped_div_gene_len)
+    pred_reads_mapped_div_gene_len = np.array(ddf_TP['num_reads'] / ddf_TP['gene_length'])
+    pred_reads_mapped_div_gene_len = pred_reads_mapped_div_gene_len / np.sum(pred_reads_mapped_div_gene_len)
+    performance['corr_reads_mapped_div_gene_len'] = np.corrcoef(pred_reads_mapped_div_gene_len, reads_mapped_div_gene_len)[0][1]
+    L1_average_abund_reads_mapped_div_gene_len = np.sum(np.abs(pred_reads_mapped_div_gene_len - reads_mapped_div_gene_len))
+    performance['L1_reads_mapped_div_gene_len'] = L1_average_abund_reads_mapped_div_gene_len
+    if float(len(ddf_TP) + len(ddf_FP)) > 0:
+        performance['percent_correct_predictions'] = len(ddf_TP) / float(len(ddf_TP) + len(ddf_FP))
+    else:
+        performance['percent_correct_predictions'] = 0
+    performance['total_number_of_predictions'] = len(ddf_TP) + len(ddf_FP)
+    # also record what filter threshold was used
+    performance['filter_threshold'] = filter_threshold
+    # put this in a dataframe
+    performance_df = pd.DataFrame(performance, index=[0])
+    return performance_df
+
+def calculate_sourmash_performance(gather_file, ground_truth_file, filter_threshold):
+    """
+    This function will parse the output from sourmash gather and turn it into a functional profile that we can compare
+    to the ground truth.
+    From the check_sourmash_correlation method, it appears that:
+     f_unique_weighted correlates with reads mapped, median, mean coverage, and nucleotide_overlap
+     reads mapped / gene length correlates with sourmash's average_abund and median_abund: corr=0.9957443813164701
+
+    :param gather_file: the csv output from sourmash
+    :param ground_truth_file: the ground truth file (output from find_genes_in_sim.py)
+    :param filter_threshold: ignore ground truth genes that have less than this many reads in the ground truth
+    :return: a dataframe containing the performance characteristics of the sourmash results
+    """
+    if not os.path.exists(gather_file):
+        raise Exception(f"File {gather_file} does not exist")
+    if not os.path.exists(ground_truth_file):
+        raise Exception(f"File {ground_truth_file} does not exist")
+
+    sourmash_rel_abund_col = 'f_unique_weighted'
+    ground_truth_rel_abund_col = 'reads_mapped'
+
+    # s prefix is for "sourmash" while g prefix is for "ground truth"
+    sdf = pd.read_csv(gather_file)
+    gdf = pd.read_csv(ground_truth_file)
+    # sort the ground truth by gene name, this will be the order that we stick with
+    gdf = gdf.sort_values(by='gene_name')
+
+    # grab the sourmash infered gene names
+    sgene_names = list(sdf['name'])
+    sgene_names = [x.split('|')[0] for x in sgene_names]
+    # replace the name column with the sourmash gene names
+    sdf['name'] = sgene_names
+    ggene_names = list(gdf['gene_name'])
+    greads_mapped = np.sum(list(gdf['reads_mapped']))
+
+    # remove the infrequent genes from the ground truth and from sourmash
+    genes_removed = set(gdf[gdf['reads_mapped'] < filter_threshold].gene_name)
+    gdf = gdf[~gdf['gene_name'].isin(genes_removed)]
+    sdf = sdf[~sdf['name'].isin(genes_removed)]
+
+    # subset the gather results to concentrate on the ones in the ground truth
+    sdf_TP = sdf[sdf['name'].isin(ggene_names)]  # true positives in sourmash
+    sdf_TP = sdf_TP.sort_values(by='name')  # sort by gene name
+    sdf_FP = sdf[~sdf['name'].isin(ggene_names)]  # false positives in sourmash
+    sdf_FN = gdf[~gdf['gene_name'].isin(sgene_names)]  # false negatives (ones in ground truth that aren't in sourmash)
+    #print(f"Out of {len(sdf)} sourmash results, TP={len(sdf_TP)} are in the ground truth, FP={len(sdf_FP)} are not, "
+    #      f"and there are FN={len(sdf_FN)} in the ground truth that are not in the sourmash results")
+    # subset the ground truth to only the ones in the gather results
+    gdf_TP = gdf[gdf['gene_name'].isin(sgene_names)]  # subset the ground truth to concentrate on the ones in the gather results
+    gdf_TP = gdf_TP.sort_values(by='gene_name')
+    metrics = ['TP', 'FP', 'FN', 'precision', 'recall', 'F1', 'corr_reads_mapped', 'L1_f_unique_weighted_reads_mapped', 'corr_ave_abund', 'L1_average_abund_reads_mapped_div_gene_len', 'percent_correct_predictions', 'total_number_of_predictions']
+    # calculate the performance metrics
+    performance = dict()
+    performance['TP'] = len(sdf_TP)
+    performance['FP'] = len(sdf_FP)
+    performance['FN'] = len(sdf_FN)
+    if performance['TP'] + performance['FP'] == 0:
+        performance['precision'] = 0
+    else:
+        performance['precision'] = performance['TP'] / float(performance['TP'] + performance['FP'])
+    if performance['TP'] + performance['FN'] == 0:
+        performance['recall'] = 0
+    else:
+        performance['recall'] = performance['TP'] / float(performance['TP'] + performance['FN'])
+    if performance['TP']:
+        performance['F1'] = 2 * performance['precision'] * performance['recall'] / float(performance['precision'] + performance['recall'])
+    else:
+        performance['F1'] = 0
+    performance['corr_reads_mapped'] = np.corrcoef(sdf_TP[sourmash_rel_abund_col], gdf_TP[ground_truth_rel_abund_col])[0][1]
+    sdf_TP_vec = np.array(sdf_TP[sourmash_rel_abund_col].values)
+    sdf_TP_vec = sdf_TP_vec / np.sum(sdf_TP_vec)
+    gdf_TP_vec = np.array(gdf_TP[ground_truth_rel_abund_col].values)
+    gdf_TP_vec = gdf_TP_vec / np.sum(gdf_TP_vec)
+    performance['L1_f_unique_weighted_reads_mapped'] = np.sum(np.abs(sdf_TP_vec - gdf_TP_vec))
+    reads_mapped_div_gene_len = np.array(gdf_TP['reads_mapped'] / gdf_TP['gene_length'])
+    reads_mapped_div_gene_len = reads_mapped_div_gene_len / np.sum(reads_mapped_div_gene_len)
+    ave_abund = sdf_TP['average_abund'] / np.sum(sdf_TP['average_abund'])
+    performance['corr_ave_abund'] = np.corrcoef(ave_abund, reads_mapped_div_gene_len)[0][1]
+    L1_average_abund_reads_mapped_div_gene_len = np.sum(np.abs(ave_abund - reads_mapped_div_gene_len))
+    performance['L1_average_abund_reads_mapped_div_gene_len'] = L1_average_abund_reads_mapped_div_gene_len
+    if len(sdf_TP) + len(sdf_FP) == 0:
+        performance['percent_correct_predictions'] = 0
+    else:
+        performance['percent_correct_predictions'] = len(sdf_TP) / float(len(sdf_TP) + len(sdf_FP))
+    performance['total_number_of_predictions'] = len(sdf_TP) + len(sdf_FP)
+    # also record what filter threshold was used
+    performance['filter_threshold'] = filter_threshold
+    # put this in a dataframe
+    performance_df = pd.DataFrame(performance, index=[0])
+    return performance_df
 
 
+def check_sourmash_correlation(gather_file, ground_truth_file, corr_threshold=0.9):
+    """
+    Since we don't know which columns of sourmash gather correlate with which columns of the ground truth, we need to
+    just check them all
+    :param gather_file: results of sourmash gather
+    :param ground_truth_file: the output of find_genes_in_sim.py
+    :param corr_threshold: only print out stats if the correlation coef is above this threshold
+    :return: None
+    """
 
+    if not os.path.exists(gather_file):
+        raise Exception(f"File {gather_file} does not exist")
+    if not os.path.exists(ground_truth_file):
+        raise Exception(f"File {ground_truth_file} does not exist")
+    # s prefix is for "sourmash" while g prefix is for "ground truth"
+    sdf = pd.read_csv(gather_file)
+    gdf = pd.read_csv(ground_truth_file)
+    # sort the ground truth by gene name, this will be the order that we stick with
+    gdf = gdf.sort_values(by='gene_name')
+    # grab the sourmash infered gene names
+    sgene_names = list(sdf['name'])
+    sgene_names = [x.split('|')[0] for x in sgene_names]
+    # replace the name column with the sourmash gene names
+    sdf['name'] = sgene_names
+    ggene_names = list(gdf['gene_name'])
+    greads_mapped = np.sum(list(gdf['reads_mapped']))
+    # subset the gather results to concentrate on the ones in the ground truth
+    sdf_TP = sdf[sdf['name'].isin(ggene_names)]  # true positives in sourmash
+    sdf_TP = sdf_TP.sort_values(by='name')  # sort by gene name
+    sdf_FP = sdf[~sdf['name'].isin(ggene_names)]  # false positives in sourmash
+    sdf_FN = gdf[~gdf['gene_name'].isin(sgene_names)]  # false negatives (ones in ground truth that aren't in sourmash)
+    print(f"Out of {len(sdf)} sourmash results, TP={len(sdf_TP)} are in the ground truth, FP={len(sdf_FP)} are not, "
+          f"and there are FN={len(sdf_FN)} in the ground truth that are not in the sourmash results")
+    # subset the ground truth to only the ones in the gather results
+    gdf_TP = gdf[gdf['gene_name'].isin(sgene_names)]  # subset the ground truth to concentrate on the ones in the gather results
+    gdf_TP = gdf_TP.sort_values(by='gene_name')  # sort by gene name
+    # iterate over all the columns of the gather results and return the correlation coefficient with the number of reads mapped
+    ground_truth_cols = ['nucleotide_overlap', 'median_coverage', 'mean_coverage', 'reads_mapped']
+    sourmash_cols = ['intersect_bp', 'f_orig_query', 'f_match', 'f_unique_to_query',
+                     'f_unique_weighted', 'average_abund', 'median_abund', 'std_abund',
+                     'f_match_orig', 'unique_intersect_bp',
+                     'gather_result_rank', 'remaining_bp']
 
-# TODO: calculate weighted stats. Need to understand what the difference columns in the sourmash gather results are actually returning
+    for gt_col in ground_truth_cols:
+        for col in sourmash_cols:
+            corr = np.corrcoef(sdf_TP[col], gdf_TP['reads_mapped'])[0][1]
+            if corr > corr_threshold:
+                print(f"gt: {gt_col}, sm:{col}: corr={corr}")
+
+    # also look for correlation between sourmash output and #reads mapped / gene_length
+
+    for col in sourmash_cols:
+        corr = np.corrcoef(sdf_TP[col], gdf_TP['reads_mapped'] / gdf_TP['gene_length'])[0][1]
+        if corr > corr_threshold:
+            print(f"gt: reads mapped / gene length, sm:{col}: corr={corr}")
+

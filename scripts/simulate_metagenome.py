@@ -7,7 +7,7 @@ import platform
 # for relative imports
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
-from src.HelperFuncs import run_simulation, compute_rel_abundance
+from src.HelperFuncs import run_simulation
 
 bbtools_loc = os.path.abspath("../utils/bbmap")
 
