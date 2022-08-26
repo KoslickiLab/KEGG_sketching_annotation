@@ -1,5 +1,5 @@
 pandas
-sourmash>=4.4.0
+sourmash>=4.4.3
 biopython
 numpy
 bcbio-gff
