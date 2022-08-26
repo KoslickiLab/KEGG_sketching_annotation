@@ -13,7 +13,7 @@ A range of k-mer sizes and scaled values are computed. Namely:
 | 21, 31, 51   | 1, 10, 100, 1000 | NT            |
 | 5, 7, 11, 15 | 1, 10, 100, 1000 | AA            |
 
-2. `dump_hashes.py` is a python script that will dump all the hashes of a given sourmash signature collection.
+2. `dump_hashes.sh` is script that will dump all the hashes of a given sourmash signature collection.
 Such as one output from `sketch_genes_KO.sh`. This will be used in the future to create bloom filters or the like
 to store the hashes for fast lookups.
 
