@@ -45,21 +45,25 @@ echo "./create_gene_ref_db.py "$dataDir/reference_genomes" $proteinDatabaseTrunc
 #$dataDir/reference_genomes" $proteinDatabaseTruncated $numGenomesTruncatedDB
 
 # simulate a metagenome
-#./simulate_metagenome.py -r $genomeDatabase -o $simulatedMetagenome -n $numReads -l $readLen --num_orgs $numGenes
+echo "./simulate_metagenome.py -r $genomeDatabaseFull -o $simulatedMetagenome -n $numReads -l $readLen --num_orgs $numGenes"
+#./simulate_metagenome.py -r $genomeDatabaseFull -o $simulatedMetagenome -n $numReads -l $readLen --num_orgs $numGenes
 
 # get the abundance estimates for the simulated metagenome
-#./find_genes_in_sim.py --database_dir "$dataDir/reference_genomes" --simulation $simulatedMetagenome --output_file "$dataDir/ground_truth.csv"
+echo "./find_genes_in_sim.py --database_dir $genomePath --simulation $simulatedMetagenome --output_file $dataDir/ground_truth.csv"
+#./find_genes_in_sim.py --database_dir $genomePath --simulation $simulatedMetagenome --output_file $dataDir/ground_truth.csv
 
 # Run sourmash
-#/usr/bin/time ./classify_sourmash.py -r $proteinDatabase -m $simulatedMetagenome -o $dataDir -k $kSize --ref_scale_size $refScale --query_scale_size $queryScale --query_translate -t $thresholdBP
+echo "/usr/bin/time ./classify_sourmash.py -r $proteinDatabaseTruncated -m $simulatedMetagenome -o $dataDir -k $kSize --ref_scale_size $refScale --query_scale_size $queryScale --query_translate -t $thresholdBP"
+#/usr/bin/time ./classify_sourmash.py -r $proteinDatabaseTruncated -m $simulatedMetagenome -o $dataDir -k $kSize --ref_scale_size $refScale --query_scale_size $queryScale --query_translate -t $thresholdBP
 
 # Calculate sourmash performance metrics
 gatherFile="$dataDir/$(basename $simulatedMetagenome)_k_${kSize}_scale_${queryScale}.sig_$(basename $proteinDatabase)_k_${kSize}_scale_${refScale}.sig_gather.csv"
 #echo "gatherFile: $gatherFile"
+echo "./calculate_sourmash_performance.py -g $dataDir/ground_truth.csv -s $gatherFile -o $dataDir/sourmash_performance_metrics.csv"
 #./calculate_sourmash_performance.py -g $dataDir/ground_truth.csv -s $gatherFile -o $dataDir/sourmash_performance_metrics.csv
 
 # Run Diamond
-/usr/bin/time ./classify_diamond.py -r $proteinDatabase -m $simulatedMetagenome -o $dataDir
+/usr/bin/time ./classify_diamond.py -r $proteinDatabaseTruncated -m $simulatedMetagenome -o $dataDir
 diamondFile="$dataDir/$(basename $simulatedMetagenome)_$(basename $proteinDatabase).dmnd_matches.csv"
 echo "diamondFile: $diamondFile"
 
