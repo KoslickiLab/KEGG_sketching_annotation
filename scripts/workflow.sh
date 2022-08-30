@@ -36,11 +36,13 @@ echo "./create_genome_ref_db.py $genomePath $genomeDatabaseTruncated $numGenomes
 
 # create the mapping files required for the protein database
 echo "./make_mapping_file.py "$genomePath""
-#./make_mapping_file.py "$dataDir/reference_genomes"
+#./make_mapping_file.py "$dataDir/reference_genomes
 
 # create the protein reference database
-echo "./create_gene_ref_db.py "$dataDir/reference_genomes" $proteinDatabase"
-#./create_gene_ref_db.py "$dataDir/reference_genomes" $proteinDatabase
+echo "./create_gene_ref_db.py "$dataDir/reference_genomes" $proteinDatabaseFull $numGenomesFullDB"
+#./create_gene_ref_db.py "$dataDir/reference_genomes" $proteinDatabaseFull $numGenomesFullDB
+echo "./create_gene_ref_db.py "$dataDir/reference_genomes" $proteinDatabaseTruncated $numGenomesTruncatedDB"
+#$dataDir/reference_genomes" $proteinDatabaseTruncated $numGenomesTruncatedDB
 
 # simulate a metagenome
 #./simulate_metagenome.py -r $genomeDatabase -o $simulatedMetagenome -n $numReads -l $readLen --num_orgs $numGenes
