@@ -64,7 +64,7 @@ echo "./calculate_sourmash_performance.py -g $dataDir/ground_truth.csv -s $gathe
 
 # Run Diamond
 /usr/bin/time ./classify_diamond.py -r $proteinDatabaseTruncated -m $simulatedMetagenome -o $dataDir
-diamondFile="$dataDir/$(basename $simulatedMetagenome)_$(basename $proteinDatabase).dmnd_matches.csv"
+diamondFile="$dataDir/$(basename $simulatedMetagenome)_$(basename $proteinDatabaseTruncated).dmnd_matches.csv"
 echo "diamondFile: $diamondFile"
 
 # Calculate diamond performance metrics
