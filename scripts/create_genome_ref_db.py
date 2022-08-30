@@ -15,7 +15,7 @@ def parse_args():
 
     parser.add_argument("in_dir", type=str, help="The full path to the directory that contains the genomes.")
     parser.add_argument("db_name", type=str, help="Name of the fasta database")
-    parser.add_argument("num_genomes", type=str, help="Number of genomes to be put in the database")
+    parser.add_argument("num_genomes", type=int, help="Number of genomes to be put in the database")
     return parser.parse_args()
 
 
