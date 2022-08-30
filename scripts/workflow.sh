@@ -21,12 +21,15 @@ refScale=10  # the higher this number, the faster things run, the smaller the da
 queryScale=1  # likely will want to keep this at one (no down-sampling of the query)
 thresholdBP=100  # this has the largest impact on FNs and FPs: setting it higher filters out more false positives, at the cost of more false negatives
 # download genomes
+echo "./get_reference_genomes.py -n $numGenomes -s $dataDir  -u"
 #./get_reference_genomes.py -n $numGenomes -s $dataDir  -u
 
 # create the full genome reference database
+echo "./create_genome_ref_db.py $dataDir $genomeDatabaseFull $numGenomesFullDB"
 #./create_genome_ref_db.py $dataDir $genomeDatabaseFull $numGenomesFullDB
 
 # create the truncated genome reference database
+echo "./create_genome_ref_db.py $dataDir $genomeDatabaseTruncated $numGenomesTruncatedDB"
 #./create_genome_ref_db.py $dataDir $genomeDatabaseTruncated $numGenomesTruncatedDB
 
 # create the mapping files required for the protein database
