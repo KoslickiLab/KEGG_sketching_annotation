@@ -11,6 +11,7 @@ import os.path
 import gzip
 import shutil
 from numpy import save
+import subprocess
 
 class Helper:
     def __init__(self, credentials):
@@ -209,8 +210,7 @@ def main():
         except EOFError:
             print('Problem downloading genome ' + current_directory_name + ' due to a closed onnection, skipping this.')
             cmd = 'rm -rf ' + path+'/'+current_directory_name
-            print(cmd)
-            exit(-1)
+            subprocess.call(cmd.split(' '))
             continue
         total_downloaded += 1
         helper.return_to_original_direct()
