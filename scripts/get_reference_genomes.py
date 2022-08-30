@@ -201,8 +201,14 @@ def main():
             break
 
         # download selected genome and gbff
-        helper.download_FNA_file(path, current_directory_name)
-        helper.download_GBFF_file(path, current_directory_name)
+        try:
+            helper.download_FNA_file(path, current_directory_name)
+            helper.download_GBFF_file(path, current_directory_name)
+        except EOFError:
+            print(path, current_directory_name)
+            print('Exiting for now')
+            exit(-1)
+            continue
         total_downloaded += 1
         helper.return_to_original_direct()
 
