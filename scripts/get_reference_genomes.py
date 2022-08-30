@@ -78,7 +78,7 @@ class Helper:
 
     def download_GBFF_file(self,path, current_directory_name):
         ftp = self.ftp
-        path = self.make_file(os.path.join(path, f"{current_directory_name}"))
+        #path = self.make_file(os.path.join(path, f"{current_directory_name}"))
         for filename in ftp.nlst():
             if filename.endswith(".gbff.gz"):
                 completeName = os.path.join(path, filename)
@@ -201,12 +201,15 @@ def main():
             break
 
         # download selected genome and gbff
+        print('Downloading genome: ' + current_directory_name)
+
         try:
             helper.download_FNA_file(path, current_directory_name)
             helper.download_GBFF_file(path, current_directory_name)
         except EOFError:
-            print(path, current_directory_name)
-            print('Exiting for now')
+            print('Problem downloading genome ' + current_directory_name + ' due to a closed onnection, skipping this.')
+            cmd = 'rm -rf ' + path+'/'+current_directory_name
+            print(cmd)
             exit(-1)
             continue
         total_downloaded += 1
