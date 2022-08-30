@@ -8,17 +8,19 @@ def parse_args():
     " present. In each of the genome directory, there should be a mapping file present with the same name as the genome "
     " and with the extension csv. These csv files should be created using the script make_mapping_file.py. This script will then parse all of these csv "
     " files, and then create a reference database of all the genes present in those mapping files. The output of this script will be a fasta file, "
-    " with one sequence for every gene.",
+    " with one sequence for every gene. The number of genomes whose genes will be put in the ref db is specified by the third argument.",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument("in_dir", type=str, help="The full path to the directory that contains the genomes.")
     parser.add_argument("db_name", type=str, help="Name of the fasta database")
+    parser.add_argument("num_genomes", type=int, help="Number of genomes to be put in the database")
     return parser.parse_args()
 
 def main():
     args = parse_args()
     genome_path = args.in_dir
     fasta_filename = args.db_name
+    num_genomes = args.num_genomes
 
     if not os.path.isdir(genome_path):
         print("Genome directory is not a valid directory!")
@@ -32,7 +34,11 @@ def main():
 
     # iterate over the genomes
     genome_dir_names = [x[0] for x in os.walk(genome_path)][1:]
-    for genome_dir in genome_dir_names:
+    if num_genomes > len(genome_dir_names):
+        print("Not enough genomes in the directory. Revise the num_genomes argument.")
+        exit(-1)
+
+    for genome_dir in genome_dir_names[:num_genomes]:
         genome_name = genome_dir.split('/')[-1]
         mapping_filename = genome_name + "_mapping.csv"
 

@@ -6,7 +6,8 @@ mkdir -p $dataDir
 # File extensions must be fa/fasta/faa otherwise bbmap doesn't know how to parse them
 genomeDatabaseFull="$dataDir/genome_ref_full.fa"
 genomeDatabaseTruncated="$dataDir/genome_ref_truncated.fa"
-proteinDatabase="$dataDir/protein_ref.faa"
+proteinDatabaseFull="$dataDir/protein_ref_full.faa"
+proteinDatabaseTruncated="$dataDir/protein_ref_truncated.faa"
 simulatedMetagenome="$dataDir/simulatedMetagenome.fastq"
 genomePath="$dataDir/reference_genomes"
 
@@ -34,9 +35,11 @@ echo "./create_genome_ref_db.py $genomePath $genomeDatabaseTruncated $numGenomes
 #./create_genome_ref_db.py $dataDir $genomeDatabaseTruncated $numGenomesTruncatedDB
 
 # create the mapping files required for the protein database
+echo "./make_mapping_file.py "$genomePath""
 #./make_mapping_file.py "$dataDir/reference_genomes"
 
 # create the protein reference database
+echo "./create_gene_ref_db.py "$dataDir/reference_genomes" $proteinDatabase"
 #./create_gene_ref_db.py "$dataDir/reference_genomes" $proteinDatabase
 
 # simulate a metagenome
