@@ -8,6 +8,7 @@ genomeDatabaseFull="$dataDir/genome_ref_full.fa"
 genomeDatabaseTruncated="$dataDir/genome_ref_truncated.fa"
 proteinDatabase="$dataDir/protein_ref.faa"
 simulatedMetagenome="$dataDir/simulatedMetagenome.fastq"
+genomePath="$dataDir/reference_genomes"
 
 # set variables
 numGenomes=10
@@ -25,11 +26,11 @@ echo "./get_reference_genomes.py -n $numGenomes -s $dataDir  -u"
 #./get_reference_genomes.py -n $numGenomes -s $dataDir  -u
 
 # create the full genome reference database
-echo "./create_genome_ref_db.py $dataDir $genomeDatabaseFull $numGenomesFullDB"
+echo "./create_genome_ref_db.py $genomePath $genomeDatabaseFull $numGenomesFullDB"
 #./create_genome_ref_db.py $dataDir $genomeDatabaseFull $numGenomesFullDB
 
 # create the truncated genome reference database
-echo "./create_genome_ref_db.py $dataDir $genomeDatabaseTruncated $numGenomesTruncatedDB"
+echo "./create_genome_ref_db.py $genomePath $genomeDatabaseTruncated $numGenomesTruncatedDB"
 #./create_genome_ref_db.py $dataDir $genomeDatabaseTruncated $numGenomesTruncatedDB
 
 # create the mapping files required for the protein database

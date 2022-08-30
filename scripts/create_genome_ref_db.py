@@ -38,7 +38,7 @@ def main():
         print("Not enough genomes in the directory. Revise the num_genomes argument.")
         exit(-1)
 
-    for genome_dir in genome_dir_names[num_genomes]:
+    for genome_dir in genome_dir_names[:num_genomes]:
         genome_name = genome_dir.split('/')[-1]
         # find which of them is the genomic fna, but not cds or rna
         genome_dir_files = [f for f in listdir(genome_dir) if isfile(join(genome_dir, f))]
