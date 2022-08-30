@@ -14,16 +14,16 @@ simulatedMetagenome="$dataDir/simulatedMetagenome.fastq"
 genomePath="$dataDir/reference_genomes"
 
 # set variables
-numGenomes=10
+numGenomes=600
 numGenomesFullDB=$numGenomes
-numGenomesTruncatedDB=8
-numReads=1000
+numGenomesTruncatedDB=500
+numReads=1000000
 readLen=150
-numGenes=10
+numGenes=10000
 kSize=7  # decreasing this increases sensitivity at cost of FP's
 refScale=10  # the higher this number, the faster things run, the smaller the database, at the cost of less sensitivity
 queryScale=1  # likely will want to keep this at one (no down-sampling of the query)
-thresholdBP=100  # this has the largest impact on FNs and FPs: setting it higher filters out more false positives, at the cost of more false negatives
+thresholdBP=50  # this has the largest impact on FNs and FPs: setting it higher filters out more false positives, at the cost of more false negatives
 
 # download genomes
 echo "$scriptDir/get_reference_genomes.py -n $numGenomes -s $dataDir  -u"
