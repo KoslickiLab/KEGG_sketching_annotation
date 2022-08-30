@@ -22,6 +22,7 @@ kSize=7  # decreasing this increases sensitivity at cost of FP's
 refScale=10  # the higher this number, the faster things run, the smaller the database, at the cost of less sensitivity
 queryScale=1  # likely will want to keep this at one (no down-sampling of the query)
 thresholdBP=100  # this has the largest impact on FNs and FPs: setting it higher filters out more false positives, at the cost of more false negatives
+
 # download genomes
 echo "./get_reference_genomes.py -n $numGenomes -s $dataDir  -u"
 #./get_reference_genomes.py -n $numGenomes -s $dataDir  -u
