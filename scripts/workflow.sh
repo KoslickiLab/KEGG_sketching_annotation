@@ -4,12 +4,15 @@ set -u
 dataDir="../data"
 mkdir -p $dataDir
 # File extensions must be fa/fasta/faa otherwise bbmap doesn't know how to parse them
-genomeDatabase="$dataDir/genome_ref.fa"
+genomeDatabaseFull="$dataDir/genome_ref_full.fa"
+genomeDatabaseTruncated="$dataDir/genome_ref_truncated.fa"
 proteinDatabase="$dataDir/protein_ref.faa"
 simulatedMetagenome="$dataDir/simulatedMetagenome.fastq"
 
 # set variables
 numGenomes=10
+numGenomesFullDB=$numGenomes
+numGenomesTruncatedDB=8
 numReads=1000
 readLen=150
 numGenes=10
@@ -18,10 +21,16 @@ refScale=10  # the higher this number, the faster things run, the smaller the da
 queryScale=1  # likely will want to keep this at one (no down-sampling of the query)
 thresholdBP=100  # this has the largest impact on FNs and FPs: setting it higher filters out more false positives, at the cost of more false negatives
 # download genomes
+echo "./get_reference_genomes.py -n $numGenomes -s $dataDir  -u"
 #./get_reference_genomes.py -n $numGenomes -s $dataDir  -u
 
-# create the genome reference database
-#./create_genome_ref_db.py $dataDir $genomeDatabase
+# create the full genome reference database
+echo "./create_genome_ref_db.py $dataDir $genomeDatabaseFull $numGenomesFullDB"
+#./create_genome_ref_db.py $dataDir $genomeDatabaseFull $numGenomesFullDB
+
+# create the truncated genome reference database
+echo "./create_genome_ref_db.py $dataDir $genomeDatabaseTruncated $numGenomesTruncatedDB"
+#./create_genome_ref_db.py $dataDir $genomeDatabaseTruncated $numGenomesTruncatedDB
 
 # create the mapping files required for the protein database
 #./make_mapping_file.py "$dataDir/reference_genomes"
