@@ -57,7 +57,7 @@ echo "/usr/bin/time ./classify_sourmash.py -r $proteinDatabaseTruncated -m $simu
 #/usr/bin/time ./classify_sourmash.py -r $proteinDatabaseTruncated -m $simulatedMetagenome -o $dataDir -k $kSize --ref_scale_size $refScale --query_scale_size $queryScale --query_translate -t $thresholdBP
 
 # Calculate sourmash performance metrics
-gatherFile="$dataDir/$(basename $simulatedMetagenome)_k_${kSize}_scale_${queryScale}.sig_$(basename $proteinDatabase)_k_${kSize}_scale_${refScale}.sig_gather.csv"
+gatherFile="$dataDir/$(basename $simulatedMetagenome)_k_${kSize}_scale_${queryScale}.sig_$(basename $proteinDatabaseTruncated)_k_${kSize}_scale_${refScale}.sig_gather.csv"
 #echo "gatherFile: $gatherFile"
 echo "./calculate_sourmash_performance.py -g $dataDir/ground_truth.csv -s $gatherFile -o $dataDir/sourmash_performance_metrics.csv"
 #./calculate_sourmash_performance.py -g $dataDir/ground_truth.csv -s $gatherFile -o $dataDir/sourmash_performance_metrics.csv
