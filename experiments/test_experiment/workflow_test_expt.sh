@@ -27,7 +27,7 @@ thresholdBP=50  # this has the largest impact on FNs and FPs: setting it higher 
 
 # download genomes
 echo "$scriptDir/get_reference_genomes.py -n $numGenomes -s $dataDir  -u"
-$scriptDir/get_reference_genomes.py -n $numGenomes -s $dataDir  -u
+$scriptDir/get_reference_genomes.py -n $numGenomes -s $dataDir -u -c mahmudhera93@gmail.com
 
 # create the full genome reference database
 echo "$scriptDir/create_genome_ref_db.py $genomePath $genomeDatabaseFull $numGenomesFullDB"
