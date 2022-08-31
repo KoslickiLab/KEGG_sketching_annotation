@@ -211,6 +211,10 @@ def main():
             print('Problem downloading genome ' + current_directory_name + ' due to a closed onnection, skipping this.')
             cmd = 'rm -rf ' + path+'/'+current_directory_name
             subprocess.call(cmd.split(' '))
+
+            helper.is_connected = False
+            while not helper.is_connected:
+                helper.connect()
             helper.return_to_original_direct()
             continue
         total_downloaded += 1
