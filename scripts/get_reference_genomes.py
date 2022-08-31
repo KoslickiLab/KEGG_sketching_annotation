@@ -67,21 +67,11 @@ class Helper:
             return False
         return True
 
-    def download_FNA_file(self, path, current_directory_name): # download all FASTA files in a directory
+    def download_FNA_and_GBFF_file(self, path, current_directory_name): # download all FASTA files in a directory
         ftp = self.ftp
         path = self.make_file(os.path.join(path, f"{current_directory_name}"))
         for filename in ftp.nlst():
-            if filename.endswith(".fna.gz"):
-                completeName = os.path.join(path, filename)
-                file = open(completeName, "wb")
-                ftp.retrbinary(f"RETR {filename}", file.write)
-                file.close()
-
-    def download_GBFF_file(self,path, current_directory_name):
-        ftp = self.ftp
-        #path = self.make_file(os.path.join(path, f"{current_directory_name}"))
-        for filename in ftp.nlst():
-            if filename.endswith(".gbff.gz"):
+            if filename.endswith(".fna.gz") or filename.endswith(".gbff.gz"):
                 completeName = os.path.join(path, filename)
                 file = open(completeName, "wb")
                 ftp.retrbinary(f"RETR {filename}", file.write)
@@ -156,8 +146,7 @@ def main():
         raise Exception(f"The file path must be a directory. I was given {save_path}")
     # check if directory is empty
     if os.listdir(save_path):
-        print(f" WARNING: the directory {save_path} is not empty, press any key to continue or ctrl+c to exit")
-        input()
+        print(f" WARNING: the directory {save_path} is not empty.")
 
     # Instantiate the helper class
     helper = Helper(credentials)
@@ -205,8 +194,7 @@ def main():
         print('Downloading genome: ' + current_directory_name)
 
         try:
-            helper.download_FNA_file(path, current_directory_name)
-            helper.download_GBFF_file(path, current_directory_name)
+            helper.download_FNA_and_GBFF_file(path, current_directory_name)
         except EOFError:
             print('Problem downloading genome ' + current_directory_name + ' due to a closed onnection, skipping this.')
             cmd = 'rm -rf ' + path+'/'+current_directory_name
@@ -220,7 +208,7 @@ def main():
 
             helper.return_to_original_direct()
             continue
-            
+
         total_downloaded += 1
         helper.return_to_original_direct()
 
