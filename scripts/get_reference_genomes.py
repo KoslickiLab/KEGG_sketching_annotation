@@ -212,11 +212,15 @@ def main():
             cmd = 'rm -rf ' + path+'/'+current_directory_name
             subprocess.call(cmd.split(' '))
 
+            print('Trying to reconnect...')
             helper.is_connected = False
             while not helper.is_connected:
                 helper.connect()
+            print('Connection reestablished.')
+
             helper.return_to_original_direct()
             continue
+            
         total_downloaded += 1
         helper.return_to_original_direct()
 
