@@ -14,9 +14,9 @@ simulatedMetagenome="$dataDir/simulatedMetagenome.fastq"
 genomePath="$dataDir/reference_genomes"
 
 # set variables
-numGenomes=600
+numGenomes=450
 numGenomesFullDB=$numGenomes
-numGenomesTruncatedDB=500
+numGenomesTruncatedDB=350
 numReads=1000000
 readLen=150
 numGenes=10000
@@ -26,8 +26,8 @@ queryScale=1  # likely will want to keep this at one (no down-sampling of the qu
 thresholdBP=50  # this has the largest impact on FNs and FPs: setting it higher filters out more false positives, at the cost of more false negatives
 
 # download genomes
-echo "$scriptDir/get_reference_genomes.py -n $numGenomes -s $dataDir  -u"
-$scriptDir/get_reference_genomes.py -n $numGenomes -s $dataDir -u -c mahmudhera93@gmail.com
+#echo "$scriptDir/get_reference_genomes.py -n $numGenomes -s $dataDir  -u"
+#$scriptDir/get_reference_genomes.py -n $numGenomes -s $dataDir -u -c mahmudhera93@gmail.com
 
 # create the full genome reference database
 echo "$scriptDir/create_genome_ref_db.py $genomePath $genomeDatabaseFull $numGenomesFullDB"
