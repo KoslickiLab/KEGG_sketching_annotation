@@ -31,29 +31,29 @@ thresholdBP=50  # this has the largest impact on FNs and FPs: setting it higher 
 
 # create the full genome reference database
 echo "$scriptDir/create_genome_ref_db.py $genomePath $genomeDatabaseFull $numGenomesFullDB"
-$scriptDir/create_genome_ref_db.py $dataDir $genomeDatabaseFull $numGenomesFullDB
+#$scriptDir/create_genome_ref_db.py $dataDir $genomeDatabaseFull $numGenomesFullDB
 
 # create the truncated genome reference database
 echo "$scriptDir/create_genome_ref_db.py $genomePath $genomeDatabaseTruncated $numGenomesTruncatedDB"
-$scriptDir/create_genome_ref_db.py $dataDir $genomeDatabaseTruncated $numGenomesTruncatedDB
+#$scriptDir/create_genome_ref_db.py $dataDir $genomeDatabaseTruncated $numGenomesTruncatedDB
 
 # create the mapping files required for the protein database
 echo "$scriptDir/make_mapping_file.py "$genomePath""
-$scriptDir/make_mapping_file.py "$dataDir/reference_genomes"
+#$scriptDir/make_mapping_file.py "$dataDir/reference_genomes"
 
 # create the protein reference database
 echo "$scriptDir/create_gene_ref_db.py "$dataDir/reference_genomes" $proteinDatabaseFull $numGenomesFullDB"
-$scriptDir/create_gene_ref_db.py "$dataDir/reference_genomes" $proteinDatabaseFull $numGenomesFullDB
+#$scriptDir/create_gene_ref_db.py "$dataDir/reference_genomes" $proteinDatabaseFull $numGenomesFullDB
 echo "$scriptDir/create_gene_ref_db.py "$dataDir/reference_genomes" $proteinDatabaseTruncated $numGenomesTruncatedDB"
-$scriptDir/create_gene_ref_db.py "$dataDir/reference_genomes" $proteinDatabaseTruncated $numGenomesTruncatedDB
+#$scriptDir/create_gene_ref_db.py "$dataDir/reference_genomes" $proteinDatabaseTruncated $numGenomesTruncatedDB
 
 # simulate a metagenome
 echo "$scriptDir/simulate_metagenome.py -r $genomeDatabaseFull -o $simulatedMetagenome -n $numReads -l $readLen --num_orgs $numGenes"
-$scriptDir/simulate_metagenome.py -r $genomeDatabaseFull -o $simulatedMetagenome -n $numReads -l $readLen --num_orgs $numGenes
+#$scriptDir/simulate_metagenome.py -r $genomeDatabaseFull -o $simulatedMetagenome -n $numReads -l $readLen --num_orgs $numGenes
 
 # get the abundance estimates for the simulated metagenome
 echo "$scriptDir/find_genes_in_sim.py --database_dir $genomePath --simulation $simulatedMetagenome --output_file $dataDir/ground_truth.csv"
-$scriptDir/find_genes_in_sim.py --database_dir $genomePath --simulation $simulatedMetagenome --output_file $dataDir/ground_truth.csv
+#$scriptDir/find_genes_in_sim.py --database_dir $genomePath --simulation $simulatedMetagenome --output_file $dataDir/ground_truth.csv
 
 # Run sourmash
 echo "/usr/bin/time $scriptDir/classify_sourmash.py -r $proteinDatabaseTruncated -m $simulatedMetagenome -o $dataDir -k $kSize --ref_scale_size $refScale --query_scale_size $queryScale --query_translate -t $thresholdBP"
