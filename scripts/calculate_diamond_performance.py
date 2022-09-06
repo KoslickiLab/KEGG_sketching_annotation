@@ -25,7 +25,7 @@ def main():
     parser.add_argument('-s', '--diamond_results', type=str, help="The output csv from sourmash gather")
     parser.add_argument('-g', '--ground_truth', type=str, help="The ground truth as calculated by find_genes_in_sim.py.")
     parser.add_argument('-o', '--out_file', type=str, help="The output csv file containing the performance statistics.")
-    parser.add_argument('-f', '--bitscore_filter_threshold', type=int, help="The bit score filter threshold to use when calculating the performance statistics.")
+    parser.add_argument('-f', '--bitscore_filter_threshold', type=int, help="The bit score filter threshold to use when calculating the performance statistics.", default=0)
     # parse the args
     args = parser.parse_args()
     diamond_results = args.diamond_results
