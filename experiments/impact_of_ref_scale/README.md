@@ -13,10 +13,14 @@ We will use the following parameters for all simulations:
 
 For sourmash, we will fix the following settings:
 1. k=7
-2. thresholdBP=100 
+2. thresholdBP=100
 
 When analyzing the results, we will only compare filtering out 0 genes from the simulation, or else filtering out those genes that have fewer than 10 reads mapping to them.
 
 # Execution files
 The `workflow.sh` script will execute the experiment. `PlotResults.py` will visualize the results.
 
+# T O D O
+The `workflow.sh` script will no longer work now because of the changes made to enable
+simulations with genes present in the sample but absent from the reference database.
+The `workflow.sh` needs to be updated like `scripts/workflow.sh` to make it working again.

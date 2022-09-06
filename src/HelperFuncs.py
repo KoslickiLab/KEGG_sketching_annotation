@@ -228,7 +228,7 @@ def parse_diamond_results(matches_file):
     return pd.DataFrame(data)
 
 
-def calculate_diamond_performance(diamond_file, ground_truth_file, filter_threshold, bitscore_threshold):
+def calculate_diamond_performance(diamond_file, ground_truth_file, filter_threshold=0, bitscore_threshold=0):
     """
     This function will parse the output from Diamond and turn it into a functional profile, and then calculate
     performance statistics similar to calculate_sourmash_performance
