@@ -39,6 +39,9 @@ with screed.open(fasta_file) as seqfile:
         seq_name = record.name
         # For the sequences from the KEGG sketching repo, the first token is the sequence name
         seq_name = seq_name.split('|')[0]
+        if len(seq_name) < 12:
+            print(f"Sequence name is too short: {seq_name}")
+            sys.exit(1)
         # get the k-mers
         kmers = set(seq[i:i + ksize] for i in range(len(seq) - ksize + 1))
         # add the k-mers to the dictionary
@@ -51,6 +54,4 @@ with screed.open(fasta_file) as seqfile:
 # write the k-mers to a file
 with open(out_file, 'w') as f:
     for kmer in kmer_dict:
-        print(f"header: {'|'.join(kmer_dict[kmer])}")
-        print(f"val: {kmer_dict[kmer]}")
         f.write(f"{kmer}, {'|'.join(kmer_dict[kmer])}\n")
