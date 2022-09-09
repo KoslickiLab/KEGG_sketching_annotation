@@ -51,4 +51,6 @@ with screed.open(fasta_file) as seqfile:
 # write the k-mers to a file
 with open(out_file, 'w') as f:
     for kmer in kmer_dict:
-        f.write(f"{kmer}, {'|'.join(kmer_dict[kmer])}")
+        print(f"header: {'|'.join(kmer_dict[kmer])}")
+        print(f"val: {kmer_dict[kmer]}")
+        f.write(f"{kmer}, {'|'.join(kmer_dict[kmer])}\n")
