@@ -40,7 +40,7 @@ with screed.open(fasta_file) as seqfile:
         # For the sequences from the KEGG sketching repo, the first token is the sequence name
         seq_name = seq_name.split('|')[0]
         # get the k-mers
-        kmers = [seq[i:i + ksize] for i in range(len(seq) - ksize + 1)]
+        kmers = set(seq[i:i + ksize] for i in range(len(seq) - ksize + 1))
         # add the k-mers to the dictionary
         for kmer in kmers:
             if kmer not in kmer_dict:
