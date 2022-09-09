@@ -24,3 +24,8 @@ that were sketched. For example:
 ```bash
 $ sourmash sig kmers --signatures kegg_genes_KO_100.faa_scale_10.db.zip --sequences /data/shared_data/KEGG_data/kegg_genes_KO_100.faa --save-kmers kmer-matches.csv --protein -k 7
 ```
+
+## Get all k-mers
+`get_all_kmers.py` is a script that will take a fasta file and output all the k-mers of a given size.
+The intention of this script is to take advantage of the fact that 21^5 is a rather small number (~4M), so
+it should be straight foward to create an index of all the k-mers and their locations in the database.
