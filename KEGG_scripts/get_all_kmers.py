@@ -39,15 +39,12 @@ with screed.open(fasta_file) as seqfile:
         seq_name = record.name
         # For the sequences from the KEGG sketching repo, the first token is the sequence name
         seq_name = seq_name.split('|')[0]
-        if len(seq_name) < 12:
-            print(f"Sequence name is too short: {seq_name}")
-            sys.exit(1)
         # get the k-mers
         kmers = set(seq[i:i + ksize] for i in range(len(seq) - ksize + 1))
         # add the k-mers to the dictionary
         for kmer in kmers:
             if kmer not in kmer_dict:
-                kmer_dict[kmer] = set(seq_name)
+                kmer_dict[kmer] = set([seq_name])
             else:
                 kmer_dict[kmer].add(seq_name)
 
