@@ -75,9 +75,6 @@ if not exists(out_dir):
 if brite not in BRITES:
     raise ValueError(f"{brite} is not a valid BRITE ID. Choices are: {BRITES}")
 
-edge_list = os.path.join("KEGG_scripts", "kegg_ko_edge_df.txt")
-sketch_file = os.path.join("KEGG_scripts", "KOs_sketched_scaled_10.sig.zip")
-
 ########################################################################################################################
 # Let's do the following: since I've already computed all pairwise distances, we can just make a large
 # least squares problem fitting the tree distances to the pairwise distances
