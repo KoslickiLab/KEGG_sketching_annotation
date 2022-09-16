@@ -4,23 +4,10 @@
 
 import argparse
 import os
-import sys
 from os.path import exists
-import pathlib
-from os import listdir
-from os.path import isfile, join
-import subprocess
-import re
 import numpy as np
-from collections import Counter
-import warnings
-import pandas as pd
 import networkx as nx
-import matplotlib.pyplot as plt
-import tempfile
-import seaborn as sns
 from scipy import sparse
-from time import perf_counter
 
 BRITES = ['br08901', 'br08902', 'br08904', 'ko00001', 'ko00002', 'ko00003', 'br08907',
           'ko01000', 'ko01001', 'ko01009', 'ko01002', 'ko01003', 'ko01005', 'ko01011',
