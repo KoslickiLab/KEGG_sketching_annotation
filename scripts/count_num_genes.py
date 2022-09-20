@@ -40,7 +40,7 @@ def main():
 
         # identify repeating gene name (locus tag)
         df = pd.read_csv(genome_dir + '/' + mapping_filename)
-        print(genome_name, str( df['gene_name'].to_list() ))
+        print(genome_name, str( len(df['gene_name'].to_list()) ))
 
 if __name__ == "__main__":
     main()
