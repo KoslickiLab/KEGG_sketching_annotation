@@ -29,6 +29,7 @@ def main():
         print("Not enough genomes in the directory. Revise the num_genomes argument.")
         exit(-1)
 
+    cumulative_count = 0
     for genome_dir in genome_dir_names[:num_genomes]:
         genome_name = genome_dir.split('/')[-1]
         mapping_filename = genome_name + "_mapping.csv"
@@ -40,7 +41,9 @@ def main():
 
         # identify repeating gene name (locus tag)
         df = pd.read_csv(genome_dir + '/' + mapping_filename)
-        print(genome_name, str( len(df['gene_name'].to_list()) ))
+        count = len(df['gene_name'].to_list())
+        cumulative_count += count
+        print(genome_name, str(count), str(cumulative_count) )
 
 if __name__ == "__main__":
     main()
