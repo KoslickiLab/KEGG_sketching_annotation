@@ -31,17 +31,17 @@ $scriptDir/create_genome_ref_db.py $genomePath $genomeDatabaseFull $numGenomesFu
 
 # create the truncated genome reference database
 echo "$scriptDir/create_genome_ref_db.py $genomePath $genomeDatabaseTruncated $numGenomesTruncatedDB"
-$scriptDir/create_genome_ref_db.py $dataDir $genomeDatabaseTruncated $numGenomesTruncatedDB
+$scriptDir/create_genome_ref_db.py $genomePath $genomeDatabaseTruncated $numGenomesTruncatedDB
 
 # create the mapping files required for the protein database
 echo "$scriptDir/make_mapping_file.py "$genomePath""
-$scriptDir/make_mapping_file.py "$dataDir/reference_genomes"
+$scriptDir/make_mapping_file.py "$genomePath"
 
 # create the protein reference database
-echo "$scriptDir/create_gene_ref_db.py "$dataDir/reference_genomes" $proteinDatabaseFull $numGenomesFullDB"
-$scriptDir/create_gene_ref_db.py "$dataDir/reference_genomes" $proteinDatabaseFull $numGenomesFullDB
-echo "$scriptDir/create_gene_ref_db.py "$dataDir/reference_genomes" $proteinDatabaseTruncated $numGenomesTruncatedDB"
-$scriptDir/create_gene_ref_db.py "$dataDir/reference_genomes" $proteinDatabaseTruncated $numGenomesTruncatedDB
+echo "$scriptDir/create_gene_ref_db.py "$genomePath" $proteinDatabaseFull $numGenomesFullDB"
+$scriptDir/create_gene_ref_db.py "$genomePath" $proteinDatabaseFull $numGenomesFullDB
+echo "$scriptDir/create_gene_ref_db.py "$genomePath" $proteinDatabaseTruncated $numGenomesTruncatedDB"
+$scriptDir/create_gene_ref_db.py "$genomePath" $proteinDatabaseTruncated $numGenomesTruncatedDB
 
 for numGenes in 500 1000; do
     # simulate a metagenome
