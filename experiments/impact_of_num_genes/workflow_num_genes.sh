@@ -26,7 +26,7 @@ queryScale=1  # likely will want to keep this at one (no down-sampling of the qu
 thresholdBP=50  # this has the largest impact on FNs and FPs: setting it higher filters out more false positives, at the cost of more false negatives
 
 # create the full genome reference database
-echo $pwd
+echo $PWD
 echo "$scriptDir/create_genome_ref_db.py $genomePath $genomeDatabaseFull $numGenomesFullDB"
 $scriptDir/create_genome_ref_db.py $dataDir $genomeDatabaseFull $numGenomesFullDB
 
