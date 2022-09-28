@@ -11,7 +11,7 @@ genomeDatabaseTruncated="$dataDir/genome_ref_truncated.fa"
 proteinDatabaseFull="$dataDir/protein_ref_full.faa"
 proteinDatabaseTruncated="$dataDir/protein_ref_truncated.faa"
 simulatedMetagenome="$dataDir/simulatedMetagenome.fastq"
-genomePath="$../reference_genomes"
+genomePath="../reference_genomes"
 
 # set variables
 numGenomes=5
