@@ -35,6 +35,7 @@ def main():
     # iterate over the genomes
     genome_dir_names = [x[0] for x in os.walk(genome_path)][1:]
     if num_genomes > len(genome_dir_names):
+        print("Given genome path: " + str(genome_path))
         print("Not enough genomes in the directory. Revise the num_genomes argument.")
         exit(-1)
 
