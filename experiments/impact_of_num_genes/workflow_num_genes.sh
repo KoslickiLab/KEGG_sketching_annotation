@@ -35,7 +35,8 @@ $scriptDir/create_genome_ref_db.py $genomePath $genomeDatabaseTruncated $numGeno
 
 # create the mapping files required for the protein database
 echo "$scriptDir/make_mapping_file.py "$genomePath""
-$scriptDir/make_mapping_file.py "$genomePath"
+#$scriptDir/make_mapping_file.py "$genomePath"
+# no need because all genomes have mapping files ready
 
 # create the protein reference database
 echo "$scriptDir/create_gene_ref_db.py "$genomePath" $proteinDatabaseFull $numGenomesFullDB"
