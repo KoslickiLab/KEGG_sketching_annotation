@@ -1,1 +1,9 @@
 .DS_Store
+*.fa
+*.faa
+*mapping.csv
+*.fna
+*.gbff
+*.pyc
+test_genomes/*
+*.fasta

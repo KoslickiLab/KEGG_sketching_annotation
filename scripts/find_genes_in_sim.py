@@ -116,7 +116,7 @@ def parse_args():
     parser.add_argument("--database_dir", type=str, help="The location of the reference database")
     parser.add_argument("--simulation", type=str, help="The BBMB simulation to analyze")
     parser.add_argument("--output_file", type=str, help="The name of the output file")
-    parser.add_argument("num_genomes", type=int, help="Number of genomes to consider")
+    parser.add_argument("--num_genomes", type=int, help="Number of genomes to consider")
     return parser.parse_args()
 
 
