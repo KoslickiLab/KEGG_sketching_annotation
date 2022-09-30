@@ -17,7 +17,7 @@ genomePath="../reference_genomes"
 numGenomes=5
 numGenomesFullDB=$numGenomes
 numGenomesTruncatedDB=3
-numReads=10000
+numReads=100000
 readLen=150
 #numGenes=10000
 kSize=7  # decreasing this increases sensitivity at cost of FP's
@@ -44,7 +44,7 @@ $scriptDir/create_gene_ref_db.py "$genomePath" $proteinDatabaseFull $numGenomesF
 echo "$scriptDir/create_gene_ref_db.py "$genomePath" $proteinDatabaseTruncated $numGenomesTruncatedDB"
 $scriptDir/create_gene_ref_db.py "$genomePath" $proteinDatabaseTruncated $numGenomesTruncatedDB
 
-for numGenes in 500 1000; do
+for numGenes in 500 1000 1500 2000; do
     # simulate a metagenome
     echo "$scriptDir/simulate_metagenome.py -r $genomeDatabaseFull -o $simulatedMetagenome -n $numReads -l $readLen --num_orgs $numGenes"
     $scriptDir/simulate_metagenome.py -r $genomeDatabaseFull -o $simulatedMetagenome -n $numReads -l $readLen --num_orgs $numGenes
@@ -61,7 +61,7 @@ for numGenes in 500 1000; do
     gatherFile="$dataDir/$(basename $simulatedMetagenome)_k_${kSize}_scale_${queryScale}.sig_$(basename $proteinDatabaseTruncated)_k_${kSize}_scale_${refScale}.sig_gather.csv"
     echo "gatherFile: $gatherFile"
     echo "$scriptDir/calculate_sourmash_performance.py -g $dataDir/ground_truth.csv -s $gatherFile -o $dataDir/sourmash_performance_metrics.csv"
-    $scriptDir/calculate_sourmash_performance.py -g $dataDir/ground_truth.csv -s $gatherFile -o $dataDir/sourmash_performance_metrics_numGenes_"$numGenes".csv
+    $scriptDir/calculate_sourmash_performance.py -g $dataDir/ground_truth.csv -s $gatherFile -o $dataDir/sourmash_performance_metrics_numGenes_"$numGenes"_numReads_"$numReads".csv
 
     # Run Diamond
     /usr/bin/time $scriptDir/classify_diamond.py -r $proteinDatabaseTruncated -m $simulatedMetagenome -o $dataDir
@@ -69,5 +69,5 @@ for numGenes in 500 1000; do
     echo "diamondFile: $diamondFile"
 
     # Calculate diamond performance metrics
-    $scriptDir/calculate_diamond_performance.py -g $dataDir/ground_truth.csv -s $diamondFile -o $dataDir/diamond_performance_metrics_numGenes_"$numGenes".csv
+    $scriptDir/calculate_diamond_performance.py -g $dataDir/ground_truth.csv -s $diamondFile -o $dataDir/diamond_performance_metrics_numGenes_"$numGenes"_numReads_"$numReads".csv
 done
