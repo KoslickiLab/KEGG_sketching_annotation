@@ -116,6 +116,7 @@ def parse_args():
     parser.add_argument("--database_dir", type=str, help="The location of the reference database")
     parser.add_argument("--simulation", type=str, help="The BBMB simulation to analyze")
     parser.add_argument("--output_file", type=str, help="The name of the output file")
+    parser.add_argument("--num_genomes", type=int, help="Number of genomes to consider")
     return parser.parse_args()
 
 
@@ -125,12 +126,19 @@ def main():
     database_dir = args.database_dir
     simulation_file = args.simulation
     output_file = args.output_file
+    num_genomes = args.num_genomes
+
     # check that the database directory exists and is not empty
     if not os.path.isdir(database_dir):
         print("Database directory is not a valid directory!")
         exit(-1)
     if len(os.listdir(database_dir)) == 0:
         print("Database directory is empty!")
+        exit(-1)
+    # check that there are enough genomes in the directory
+    genome_dir_names = [x[0] for x in os.walk(database_dir)][1:]
+    if num_genomes > len(genome_dir_names):
+        print("Not enough genomes in the directory. Revise the num_genomes argument.")
         exit(-1)
     # check that the simulation file exists
     if not os.path.isfile(simulation_file):
@@ -142,6 +150,7 @@ def main():
         os.remove(output_file)
     # get the list of genomes in the database
     genome_dir_names = [x[0] for x in os.walk(database_dir)][1:]
+    genome_dir_names = genome_dir_names[:num_genomes]
     genome_names = [os.path.split(x)[-1] for x in genome_dir_names]
     # find the mapping files in each of the genome dirs
     print("Finding mapping files...")
