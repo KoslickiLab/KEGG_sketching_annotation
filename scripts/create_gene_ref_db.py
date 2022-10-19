@@ -71,13 +71,13 @@ def main():
             aa_sequence = row['aa_sequence']
 
             header = '>' + gene_name + '|' + protein_id + '|' + assembly_id + '|' + contig_id + '|' + str(start_position) + '|' + str(end_position)
-            try:
+            if not pd.isnull(aa_sequence):
                 fasta_file.write(header + '\n')
                 fasta_file.write(aa_sequence + '\n')
-            except:
+            else:
                 num_genes_missing_aa_seq += 1
-    print('Number of genes with missing amino acid sequence = ' + str(num_genes_missing_aa_seq))
 
+    print('Number of genes with missing amino acid sequence = ' + str(num_genes_missing_aa_seq))
     fasta_file.close()
     print('DONE!')
 
