@@ -75,8 +75,7 @@ def main():
             try:
                 fasta_file.write(aa_sequence + '\n')
             except:
-                if aa_sequence is None:
-                    num_genes_missing_aa_seq += 1
+                num_genes_missing_aa_seq += 1
     print('Number of genes with missing amino acid sequence = ' + str(num_genes_missing_aa_seq))
 
     fasta_file.close()
