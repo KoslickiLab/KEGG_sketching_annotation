@@ -38,6 +38,7 @@ def main():
         print("Not enough genomes in the directory. Revise the num_genomes argument.")
         exit(-1)
 
+    num_genes_missing_aa_seq = 0
     for genome_dir in genome_dir_names[:num_genomes]:
         genome_name = genome_dir.split('/')[-1]
         mapping_filename = genome_name + "_mapping.csv"
@@ -74,9 +75,9 @@ def main():
             try:
                 fasta_file.write(aa_sequence + '\n')
             except:
-                print('Some problem occurred here')
-                print(aa_sequence, gene_name)
-                exit(-1)
+                if aa_sequence is None:
+                    num_genes_missing_aa_seq += 1
+    print('Number of genes with missing amino acid sequence = ' + str(num_genes_missing_aa_seq))
 
     fasta_file.close()
     print('DONE!')
