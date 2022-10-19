@@ -71,8 +71,8 @@ def main():
             aa_sequence = row['aa_sequence']
 
             header = '>' + gene_name + '|' + protein_id + '|' + assembly_id + '|' + contig_id + '|' + str(start_position) + '|' + str(end_position)
-            fasta_file.write(header + '\n')
             try:
+                fasta_file.write(header + '\n')
                 fasta_file.write(aa_sequence + '\n')
             except:
                 num_genes_missing_aa_seq += 1
