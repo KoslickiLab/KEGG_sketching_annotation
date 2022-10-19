@@ -75,7 +75,7 @@ def main():
                 fasta_file.write(aa_sequence + '\n')
             except:
                 print('Some problem occurred here')
-                print(aa_sequence)
+                print(aa_sequence, gene_name)
                 exit(-1)
 
     fasta_file.close()
