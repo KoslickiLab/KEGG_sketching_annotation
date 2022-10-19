@@ -71,7 +71,12 @@ def main():
 
             header = '>' + gene_name + '|' + protein_id + '|' + assembly_id + '|' + contig_id + '|' + str(start_position) + '|' + str(end_position)
             fasta_file.write(header + '\n')
-            fasta_file.write(aa_sequence + '\n')
+            try:
+                fasta_file.write(aa_sequence + '\n')
+            except:
+                print('Some problem occurred here')
+                print(aa_sequence)
+                exit(-1)
 
     fasta_file.close()
     print('DONE!')
