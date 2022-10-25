@@ -171,6 +171,7 @@ def main():
     # merge all the mapping files into one dataframe
     mapping_df = pd.concat(mapping_dfs)
     print("num of records in all mapping files: " + str(len(mapping_df.index)))
+    print(mapping_df.sample(5))
     #print(mapping_df)
 
     # import the simulation file
@@ -227,7 +228,7 @@ def main():
         else:
             raise Exception("Duplicate gene name in mapping file!")
     print('a few contig intervals:')
-    for key__ in contig_intervals.keys()[:10]:
+    for key__ in list(contig_intervals.keys())[:10]:
         print(key__, contig_intervals[key__])
     
     print("Finding overlaps...")
