@@ -170,6 +170,7 @@ def main():
         mapping_df = mapping_dfs.append(pd.read_csv(mapping_file))
     # merge all the mapping files into one dataframe
     mapping_df = pd.concat(mapping_dfs)
+    print("num of records in all mapping files: " + str(len(mapping_df.index)))
     #print(mapping_df)
 
     # import the simulation file
