@@ -204,6 +204,7 @@ def main():
         simulation_data["start"].append(start)
         simulation_data["end"].append(end)
     simulation_df = pd.DataFrame(simulation_data)
+    print("num of records in simulation dataframe: " + str(len(simulation_df.index)))
 
 
     # create dataframe for output
@@ -225,6 +226,8 @@ def main():
             contig_intervals_union[contig_id] = contig_intervals_union[contig_id] | interval[row["start_position"], row["end_position"]]
         else:
             raise Exception("Duplicate gene name in mapping file!")
+    print('a few contig intervals:')
+    print(contig_intervals[:10])
     print("Finding overlaps...")
     output_df_data = {"contig_id": [], "gene_name": [], "num_bases_overlap": [], "overlap_start": [], "overlap_end": [], "gene_start": [], "gene_end": []}
     # iterate through the all the reads in the simulation file looking for overlaps to genes
