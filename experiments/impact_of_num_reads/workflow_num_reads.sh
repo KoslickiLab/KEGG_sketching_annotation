@@ -2,7 +2,7 @@
 set -e
 set -u
 scriptDir="../../scripts"
-dataDir="data"
+dataDir="data_everything"
 mkdir -p $dataDir
 
 # File extensions must be fa/fasta/faa otherwise bbmap doesn't know how to parse them
@@ -44,8 +44,9 @@ $scriptDir/create_gene_ref_db.py "$genomePath" $proteinDatabaseFull $numGenomesF
 echo "$scriptDir/create_gene_ref_db.py "$genomePath" $proteinDatabaseTruncated $numGenomesTruncatedDB"
 $scriptDir/create_gene_ref_db.py "$genomePath" $proteinDatabaseTruncated $numGenomesTruncatedDB
 
-for numReads in 10000 50000 100000 500000 1000000; do
+for numReads in 50000 500000; do
     # simulate a metagenome
+    simulatedMetagenome="$dataDir/simulatedMetagenome_numReads_$numReads.fastq"
     echo "$scriptDir/simulate_metagenome.py -r $genomeDatabaseFull -o $simulatedMetagenome -n $numReads -l $readLen --num_orgs $numGenes"
     $scriptDir/simulate_metagenome.py -r $genomeDatabaseFull -o $simulatedMetagenome -n $numReads -l $readLen --num_orgs $numGenes
 
