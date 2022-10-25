@@ -44,7 +44,7 @@ $scriptDir/create_gene_ref_db.py "$genomePath" $proteinDatabaseFull $numGenomesF
 echo "$scriptDir/create_gene_ref_db.py "$genomePath" $proteinDatabaseTruncated $numGenomesTruncatedDB"
 $scriptDir/create_gene_ref_db.py "$genomePath" $proteinDatabaseTruncated $numGenomesTruncatedDB
 
-for numReads in 10000 30000 50000; do
+for numReads in 50000; do
     # simulate a metagenome
     echo "$scriptDir/simulate_metagenome.py -r $genomeDatabaseFull -o $simulatedMetagenome -n $numReads -l $readLen --num_orgs $numGenes"
     $scriptDir/simulate_metagenome.py -r $genomeDatabaseFull -o $simulatedMetagenome -n $numReads -l $readLen --num_orgs $numGenes
