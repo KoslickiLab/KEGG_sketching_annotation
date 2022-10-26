@@ -199,7 +199,10 @@ def main():
         start = int(header_split[2])
         end = int(header_split[3])
         contig_id = "_".join(header_split[9:11])  # this assumes that the format of the simulation will not change
-        contig_id = contig_id.split("$")[0]
+        if "_".join(header_split[9:11])[0] == '$':
+            contig_id = contig_id.split("$")[1]
+        else:
+            contig_id = contig_id.split("$")[0]
         # add the row to the dataframe
         simulation_data["contig_id"].append(contig_id)
         simulation_data["start"].append(start)
