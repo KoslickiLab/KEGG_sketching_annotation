@@ -228,12 +228,9 @@ def main():
         else:
             raise Exception("Duplicate gene name in mapping file!")
     print('a few contig intervals:')
-    num_desired = 0
     for key__ in list(contig_intervals.keys()):
         print(key__, contig_intervals[key__])
-        num_desired += 1
-        if num_desired == 10:
-            break
+        break
 
     print("Finding overlaps...")
     output_df_data = {"contig_id": [], "gene_name": [], "num_bases_overlap": [], "overlap_start": [], "overlap_end": [], "gene_start": [], "gene_end": []}
