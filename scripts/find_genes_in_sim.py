@@ -29,7 +29,7 @@ def create_ground_truth(found_genes_df):
     """
     unique_genes = found_genes_df.gene_name.unique()
     ground_truth_df = pd.DataFrame(columns=["gene_name", "gene_length", "nucleotide_overlap", "median_coverage", "mean_coverage", "reads_mapped"])
-    ground_truth_df_data = {"gene_name": [], "gene_length": [], "nucleotide_overlap": [], "median_coverage": [], "mean_coverage": [], "reads_mapped": []}
+    ground_truth_df_data = {"gene_name": [], "gene_length": [], "nucleotide_overlap": [], "median_coverage": [], "mean_coverage": [], "reads_mapped": [], "num_nts_in_reads": []}
     # TODO: the iterations of this are slow. The iterations that have a large len(intervals) are particularly slow.
     # TODO: it might be the unioning of all these intervals that's slow, or the population of the coverage array
     # TODO: which is O(gene_length * len(intervals))
@@ -70,6 +70,9 @@ def create_ground_truth(found_genes_df):
 
         median_coverage = np.median(coverage_array)
         mean_coverage = np.mean(coverage_array)
+
+        num_nts_in_reads = sum(gene_df.num_bases_overlap)
+
         # store the information in the dataframe
         ground_truth_df_data["gene_name"].append(gene)
         ground_truth_df_data["gene_length"].append(gene_length)
@@ -77,6 +80,7 @@ def create_ground_truth(found_genes_df):
         ground_truth_df_data["median_coverage"].append(median_coverage)
         ground_truth_df_data["mean_coverage"].append(mean_coverage)
         ground_truth_df_data["reads_mapped"].append(reads_mapped)
+        ground_truth_df_data["num_nts_in_reads"].append(num_nts_in_reads)
     ground_truth_df = pd.DataFrame(ground_truth_df_data)
     return ground_truth_df
 
