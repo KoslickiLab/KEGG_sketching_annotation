@@ -69,6 +69,7 @@ def main():
             end_position = row['end_position']
             strand = row['strand']
             aa_sequence = row['aa_sequence']
+            nt_sequence = row['nt_sequence']
 
             header = '>' + gene_name + '|' + protein_id + '|' + assembly_id + '|' + contig_id + '|' + str(start_position) + '|' + str(end_position)
             if not pd.isnull(aa_sequence):
@@ -76,6 +77,11 @@ def main():
                 fasta_file.write(aa_sequence + '\n')
             else:
                 num_genes_missing_aa_seq += 1
+                if pd.isnull(nt_sequence):
+                    print("DOOMED!")
+                else:
+                    print("NOT DOOMED!")
+                exit(-1)
 
     print('Number of genes with missing amino acid sequence = ' + str(num_genes_missing_aa_seq))
     fasta_file.close()
