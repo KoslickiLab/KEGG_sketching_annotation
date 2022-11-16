@@ -8,8 +8,8 @@ mkdir -p $dataDir
 # File extensions must be fa/fasta/faa otherwise bbmap doesn't know how to parse them
 genomeDatabaseFull="$dataDir/genome_ref_full.fa"
 genomeDatabaseTruncated="$dataDir/genome_ref_truncated.fa"
-proteinDatabaseFull="$dataDir/protein_ref_full.faa"
-proteinDatabaseTruncated="$dataDir/protein_ref_truncated.faa"
+proteinDatabaseFull="$dataDir/protein_ref_full.fna"
+proteinDatabaseTruncated="$dataDir/protein_ref_truncated.fna"
 simulatedMetagenome="$dataDir/simulatedMetagenome.fastq"
 genomePath="../extracted_genomes_from_kegg"
 
