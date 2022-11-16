@@ -2,6 +2,7 @@
 import argparse
 import os
 import pandas as pd
+from Bio.Seq import Seq
 
 def parse_args():
     parser = argparse.ArgumentParser(description="This script will take a directory as input where a list of genomes are "
@@ -72,13 +73,19 @@ def main():
             nt_sequence = row['nt_sequence']
 
             header = '>' + gene_name + '|' + protein_id + '|' + assembly_id + '|' + contig_id + '|' + str(start_position) + '|' + str(end_position)
-            fasta_file.write(header+'\n')
-            fasta_file.write(nt_sequence + '\n')
-            #if not pd.isnull(aa_sequence):
-            #    fasta_file.write(header + '\n')
-            #    fasta_file.write(aa_sequence + '\n')
-            #else:
-            #    num_genes_missing_aa_seq += 1
+            #fasta_file.write(header+'\n')
+            #fasta_file.write(nt_sequence + '\n')
+
+            if not pd.isnull(aa_sequence):
+                fasta_file.write(header + '\n')
+                fasta_file.write(aa_sequence + '\n')
+            else:
+                if len(nt_sequence)%3 != 0:
+                    append_length = 3 - len(nt_sequence)%3
+                    nt_sequence = nt_sequence + 'N' * append_length
+                aa_sequence = str(Seq(nt_sequence).translate())
+                fasta_file.write(header + '\n')
+                fasta_file.write(aa_sequence + '\n')
 
 
     fasta_file.close()
