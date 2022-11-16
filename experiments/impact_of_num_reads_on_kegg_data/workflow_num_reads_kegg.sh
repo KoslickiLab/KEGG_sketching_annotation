@@ -14,9 +14,9 @@ simulatedMetagenome="$dataDir/simulatedMetagenome.fastq"
 genomePath="../extracted_genomes_from_kegg"
 
 # set variables
-numGenomes=5
+numGenomes=30
 numGenomesFullDB=$numGenomes
-numGenomesTruncatedDB=3
+numGenomesTruncatedDB=20
 #numReads=100000
 readLen=150
 numGenes=1000
@@ -44,7 +44,7 @@ $scriptDir/create_gene_ref_db.py "$genomePath" $proteinDatabaseFull $numGenomesF
 echo "$scriptDir/create_gene_ref_db.py "$genomePath" $proteinDatabaseTruncated $numGenomesTruncatedDB"
 $scriptDir/create_gene_ref_db.py "$genomePath" $proteinDatabaseTruncated $numGenomesTruncatedDB
 
-for numReads in 2000; do
+for numReads in 200000; do
     # simulate a metagenome
     echo "$scriptDir/simulate_metagenome.py -r $genomeDatabaseFull -o $simulatedMetagenome -n $numReads -l $readLen --num_orgs $numGenes"
     $scriptDir/simulate_metagenome.py -r $genomeDatabaseFull -o $simulatedMetagenome -n $numReads -l $readLen --num_orgs $numGenes
