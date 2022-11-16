@@ -79,9 +79,10 @@ def main():
                 num_genes_missing_aa_seq += 1
                 if pd.isnull(nt_sequence):
                     print("DOOMED!")
+                    exit(-1)
                 else:
                     print("NOT DOOMED!")
-                exit(-1)
+
 
     print('Number of genes with missing amino acid sequence = ' + str(num_genes_missing_aa_seq))
     fasta_file.close()
