@@ -26,7 +26,7 @@ def main():
     parser.add_argument('-k', '--kmer_size', type=int, help="The size of the kmer to use.")
     parser.add_argument('-t', '--threshold_bp', type=int, help="The threshold of bp in common between query and "
                                                                "reference to warant inclusion in the results.", default=100)
-    parser.add_argument('-n', '--num_results', type=int, help="Return at most n results", default=1000)
+    #parser.add_argument('-n', '--num_results', type=int, help="Return at most n results", default=1000)
     parser.add_argument('--ref_scale_size', type=int, help="The scale factor to use for the reference database: "
                                                            "s is an integer >=1 and is the denominator of the fraction of sketches to keep.")
     parser.add_argument('--query_scale_size', type=int, help="The scale factor to use for the query: "
@@ -50,7 +50,7 @@ def main():
     ref_scale = args.ref_scale_size
     query_scale = args.query_scale_size
     threshold_bp = args.threshold_bp
-    num_res = args.num_results
+    #num_res = args.num_results
     if query_is_protein:
         query_sketch_type = 'protein'
     else:
@@ -79,10 +79,10 @@ def main():
     # Then run sourmash gather
     gather_out_file = os.path.join(out_dir, f"{os.path.basename(query_sketch_file)}_{os.path.basename(ref_sketch_file)}_gather.csv")
     if query_translate:
-        run_sourmash_gather(query_sketch_file, ref_sketch_file, gather_out_file, 'protein', num_results=num_res,
+        run_sourmash_gather(query_sketch_file, ref_sketch_file, gather_out_file, 'protein', num_results=None,
                             threshold_bp=threshold_bp, quiet=False)
     else:
-        run_sourmash_gather(query_sketch_file, ref_sketch_file, gather_out_file, query_sketch_type, num_results=num_res,
+        run_sourmash_gather(query_sketch_file, ref_sketch_file, gather_out_file, query_sketch_type, num_results=None,
                             threshold_bp=threshold_bp, quiet=False)
     # And calculate the results
     #stats = calc_binary_stats_sourmash(rel_abund_file, gather_out_file)
