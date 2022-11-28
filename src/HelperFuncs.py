@@ -14,7 +14,7 @@ bbtools_loc = os.path.abspath(f"{THIS_DIR}/../utils/bbmap")
 diamond_loc = os.path.abspath(f"{THIS_DIR}/../utils/")
 
 
-def run_simulation(reference_file, out_file, num_reads, len_reads=150, noisy=False, num_orgs=250):
+def run_simulation(reference_file, out_file, num_reads, len_reads=150, noisy=False, num_orgs=250, uniform=False):
     """
     This function runs a simulation using bbtools "randomreads.sh"
     :param reference_file: The input sequences from which to make a metagenome
@@ -40,7 +40,10 @@ def run_simulation(reference_file, out_file, num_reads, len_reads=150, noisy=Fal
         simple_names = "t"
         illumina_names = "f"
         overwrite = "t"
-        metagenome = "t"
+        if uniform:
+            metagenome = "f"
+        else:
+            metagenome = "t"
         banns = "t"
         # Note: reads by default are exactly 150bp long, not paired
         cmd += f"simplenames={simple_names} overwrite={overwrite} illuminanames={illumina_names} metagenome={metagenome} banns={banns} "
