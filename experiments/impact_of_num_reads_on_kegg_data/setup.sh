@@ -2,7 +2,7 @@
 set -e
 set -u
 scriptDir=$1
-dataDir="data"
+dataDir=$2
 mkdir -p $dataDir
 
 # File extensions must be fa/fasta/faa otherwise bbmap doesn't know how to parse them
