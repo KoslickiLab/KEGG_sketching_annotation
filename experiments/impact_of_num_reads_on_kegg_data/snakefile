@@ -1,5 +1,6 @@
 script_dir = '../../scripts'
-data_dir = './snakemake_data'
+data_dir = 'snakemake_data'
+
 rule setup_initials:
     input:
         "setup.sh",
@@ -11,3 +12,22 @@ rule setup_initials:
         data_dir + '/protein_ref_truncated.faa'
     shell:
         'bash {input[0]} ' + script_dir + ' ' + data_dir
+
+
+read_length = 150
+k = 7
+ref_scale = 10
+query_scale = 1
+threshold_bp = 50
+num_organisms = 30
+num_reads_list = [40000, 50000]
+
+rule create_metagenomes:
+    input:
+        script_dir + '/simulate_metagenome.py',
+        data_dir + '/genome_ref_full.fa',
+    output:
+        data_dir + '/simulated_metagenome_num_reads_{num_reads_list}.fastq'
+    shell:
+        "python {input[0]} -r {input[1]} -o {output} -n {num_reads_list} -l " + str(read_length) + " --num_orgs " + str(num_organisms)
+        
