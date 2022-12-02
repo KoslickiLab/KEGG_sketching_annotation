@@ -1,19 +1,6 @@
 script_dir = '../../scripts'
 data_dir = 'snakemake_data'
 
-rule setup_initials:
-    input:
-        "setup.sh",
-        script_dir + '/create_genome_ref_db.py'
-    output:
-        data_dir + '/genome_ref_full.fa',
-        data_dir + '/genome_ref_truncated.fa',
-        data_dir + '/protein_ref_full.faa',
-        data_dir + '/protein_ref_truncated.faa'
-    shell:
-        'bash {input[0]} ' + script_dir + ' ' + data_dir
-
-
 read_length = 150
 k = 7
 ref_scale = 10
@@ -25,8 +12,20 @@ num_reads_list = ['40000', '50000']
 rule create_metagenomes:
     input:
         script_dir + '/simulate_metagenome.py',
-        data_dir + '/genome_ref_full.fa',
+        data_dir + '/genome_ref_full.fa'
     output:
         expand(data_dir + '/simulated_metagenome_num_reads_{num_reads}.fastq', num_reads=num_reads_list)
     shell:
         "python {input[0]} -r {input[1]} -o {output} -n {wildcards.num_reads} -l " + str(read_length) + " --num_orgs " + str(num_organisms)
+
+rule setup_initials:
+    input:
+        "setup.sh",
+        script_dir + '/create_genome_ref_db.py'
+    output:
+        data_dir + '/genome_ref_full.fa',
+        data_dir + '/genome_ref_truncated.fa',
+        data_dir + '/protein_ref_full.faa',
+        data_dir + '/protein_ref_truncated.faa'
+    shell:
+        'bash {input[0]} ' + script_dir + ' ' + data_dir
