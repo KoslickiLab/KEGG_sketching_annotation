@@ -4,6 +4,7 @@ biopython
 numpy
 bcbio-gff
 crlibm
+snakemake
 # These are for CAMISIM, but they apparently conflict with the above (samtools in particular) but leaving here for easy
 # CAMISIM install
 #conda create -y -n cami_env_py27 python=2.7

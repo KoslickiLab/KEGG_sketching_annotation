@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 set -u
-scriptDir="../../scripts"
+scriptDir=$1
 dataDir="data"
 mkdir -p $dataDir
 
