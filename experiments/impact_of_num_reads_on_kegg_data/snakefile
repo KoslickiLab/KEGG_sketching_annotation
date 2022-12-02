@@ -1,0 +1,13 @@
+script_dir = '../../scripts'
+data_dir = './snakemake_data'
+rule setup_initials:
+    input:
+        "setup.sh",
+        script_dir + '/create_genome_ref_db.py'
+    output:
+        data_dir + '/genome_ref_full.fa',
+        data_dir + '/genome_ref_truncated.fa',
+        data_dir + '/protein_ref_full.faa',
+        data_dir + '/protein_ref_truncated.faa'
+    shell:
+        'bash {input[0]}'
