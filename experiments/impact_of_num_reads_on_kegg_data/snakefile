@@ -13,6 +13,26 @@ genome_path = '../extracted_genomes_from_kegg'
 num_reads_list = ['40000', '50000']
 
 
+rule run_diamond:
+    input:
+        script_dir+'/classify_diamond.py',
+        script_dir+'/calculate_diamond_performance.py'
+        data_dir + '/protein_ref_truncated.faa',
+        expand(data_dir+'/simulated_metagenome_num_reads_{num_reads}.fastq', num_reads=num_reads_list),
+        expand(data_dir+'/ground_truth_num_reads_{nr}.csv', nr=num_reads_list)
+    output:
+        expand( data_dir+'/diamond_output_file_num_reads_{nr}', nr=num_reads_list ),
+        expand( data_dir+'/diamond_performance_metrics_num_reads_{nr}', nr=num_reads_list )
+    benchmark:
+        data_dir+'/diamond_benchmark'
+    run:
+        for num_reads in num_reads_list:
+            cmd = '{input[0]} -r %s -m %s -o %s' % ( data_dir+'/protein_ref_truncated.faa', data_dir+'/simulated_metagenome_num_reads_%s.fastq'%(num_reads), data_dir+'/diamond_output_file_num_reads_'+num_reads )
+            shell(cmd)
+            cmd = '{input[1]} -g %s -s %s -o %s' % ( data_dir+'/ground_truth_num_reads_%s.csv'%(num_reads), data_dir+'/diamond_output_file_num_reads_'+num_reads, data_dir+'/diamond_performance_metrics_num_reads_'+num_reads )
+            shell(cmd)
+
+
 rule get_sourmash_results:
     input:
         script_dir+'/calculate_sourmash_performance.py',
