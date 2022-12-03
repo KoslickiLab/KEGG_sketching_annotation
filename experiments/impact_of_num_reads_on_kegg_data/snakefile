@@ -14,7 +14,7 @@ num_reads_list = ['10000', '12000']
 
 rule all:
     input:
-        expand( data_dir+'/diamond_performance_metrics_num_reads_{nr}', nr=num_reads_list )
+        expand( data_dir+'/diamond_performance_metrics_num_reads_{nr}', nr=num_reads_list ),
         expand(data_dir+'/sourmash_performance_metrics_num_reads_{nr}', nr=num_reads_list)
 
 rule run_diamond:
