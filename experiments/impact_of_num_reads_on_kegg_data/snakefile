@@ -16,8 +16,8 @@ num_reads_list = ['40000', '50000']
 rule run_diamond:
     input:
         script_dir+'/classify_diamond.py',
-        script_dir+'/calculate_diamond_performance.py'
-        data_dir + '/protein_ref_truncated.faa',
+        script_dir+'/calculate_diamond_performance.py',
+        data_dir+'/protein_ref_truncated.faa',
         expand(data_dir+'/simulated_metagenome_num_reads_{num_reads}.fastq', num_reads=num_reads_list),
         expand(data_dir+'/ground_truth_num_reads_{nr}.csv', nr=num_reads_list)
     output:
