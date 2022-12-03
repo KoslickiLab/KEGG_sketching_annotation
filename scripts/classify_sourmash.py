@@ -23,6 +23,7 @@ def main():
     parser.add_argument('-r', '--reference_file', type=str, help="The reference file (fna or faa) that you want to compare against.")
     parser.add_argument('-m', '--metagenome', type=str, help="The simulated metagenome.")
     parser.add_argument('-o', '--out_dir', type=str, help="The output directory.")
+    parser.add_argument('-g', '--gather_fname', type=str, help="The output filename.")
     parser.add_argument('-k', '--kmer_size', type=int, help="The size of the kmer to use.")
     parser.add_argument('-t', '--threshold_bp', type=int, help="The threshold of bp in common between query and "
                                                                "reference to warant inclusion in the results.", default=100)
@@ -50,6 +51,7 @@ def main():
     ref_scale = args.ref_scale_size
     query_scale = args.query_scale_size
     threshold_bp = args.threshold_bp
+    out_filename = args.gather_fname
     #num_res = args.num_results
     if query_is_protein:
         query_sketch_type = 'protein'
@@ -77,7 +79,9 @@ def main():
     if not reuse_query_sketch:
         make_sketches(ksize, query_scale, metagenome_file, query_sketch_type, out_dir, per_record=False)
     # Then run sourmash gather
-    gather_out_file = os.path.join(out_dir, f"{os.path.basename(query_sketch_file)}_{os.path.basename(ref_sketch_file)}_gather.csv")
+    gather_out_file = out_filename
+    if gather_out_file is None:
+        gather_out_file = os.path.join(out_dir, f"{os.path.basename(query_sketch_file)}_{os.path.basename(ref_sketch_file)}_gather.csv")
     if query_translate:
         run_sourmash_gather(query_sketch_file, ref_sketch_file, gather_out_file, 'protein', num_results=None,
                             threshold_bp=threshold_bp, quiet=False)
