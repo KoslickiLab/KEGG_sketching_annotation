@@ -66,7 +66,7 @@ rule create_ground_truth:
         script_dir + '/find_genes_in_sim.py',
         expand(data_dir + '/simulated_metagenome_num_reads_{num_reads}.fastq', num_reads=num_reads_list),
     output:
-        data_dir+'/ground_truth_num_reads_{num_reads}.csv
+        data_dir+'/ground_truth_num_reads_{num_reads}.csv'
     shell:
         'python {input[0]} --database_dir ' + genome_path + ' --simulation ' + data_dir + '/simulated_metagenome_num_reads_{wildcards.num_reads}.fastq --output_file ' + data_dir + '/ground_truth_num_reads_{wildcards.num_reads}.csv' + ' --num_genomes ' + str(num_genomes_full_db)
 
