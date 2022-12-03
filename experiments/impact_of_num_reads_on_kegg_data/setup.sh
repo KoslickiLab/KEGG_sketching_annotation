@@ -10,7 +10,7 @@ genomeDatabaseFull="$dataDir/genome_ref_full.fa"
 genomeDatabaseTruncated="$dataDir/genome_ref_truncated.fa"
 proteinDatabaseFull="$dataDir/protein_ref_full.faa"
 proteinDatabaseTruncated="$dataDir/protein_ref_truncated.faa"
-genomePath=$10
+genomePath=${10}
 
 # set variables
 numGenomes=$3
