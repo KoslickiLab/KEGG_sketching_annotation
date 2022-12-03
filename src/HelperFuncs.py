@@ -183,7 +183,7 @@ def run_diamond_blastx(query_file, database_file, out_file, num_threads=multipro
     """
     cmd = f"{diamond_loc}/./diamond blastx -d {database_file} -q {query_file} -o {out_file} -p {num_threads}"
     #res = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
-    res = subprocess.run(cmd)
+    res = subprocess.run(cmd.split(' '))
     if res.returncode != 0:
         raise Exception(f"The command {cmd} exited with nonzero exit code {res.returncode}")
     # put the header into the file
