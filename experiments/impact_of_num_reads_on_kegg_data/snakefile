@@ -72,13 +72,12 @@ rule create_ground_truth:
 
 rule all:
     input:
-        expand(data_dir + '/simulated_metagenome_num_reads_{num_reads}.fastq', num_reads=num_reads_list)
+        expand(data_dir + '/simulated_metagenome_num_reads_{num_read}.fastq', num_read=num_reads_list)
 
 rule create_metagenomes:
     input:
         expand(script_dir + '/simulate_metagenome.py', num_reads=num_reads_list),
         expand(data_dir + '/genome_ref_full.fa', num_reads=num_reads_list)
-
     output:
         data_dir + '/simulated_metagenome_num_reads_{num_reads}.fastq'
         #expand(data_dir + '/simulated_metagenome_num_reads_{num_reads}.fastq', num_reads=num_reads_list)
