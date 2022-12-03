@@ -10,8 +10,12 @@ num_organisms = 30
 num_genomes_full_db = 30
 num_genomes_truncated_db = 20
 genome_path = '../extracted_genomes_from_kegg'
-num_reads_list = ['40000', '50000']
+num_reads_list = ['10000', '12000']
 
+rule all:
+    input:
+        expand( data_dir+'/diamond_performance_metrics_num_reads_{nr}', nr=num_reads_list )
+        expand(data_dir+'/sourmash_performance_metrics_num_reads_{nr}', nr=num_reads_list)
 
 rule run_diamond:
     input:
@@ -70,22 +74,14 @@ rule create_ground_truth:
         for num_reads in num_reads_list:
             shell('python {input[0]} --database_dir ' + genome_path + ' --simulation ' + data_dir + '/simulated_metagenome_num_reads_' + num_reads + '.fastq --output_file ' + data_dir + '/ground_truth_num_reads_' + num_reads + '.csv' + ' --num_genomes ' + str(num_genomes_full_db))
 
-rule all:
-    input:
-        expand(data_dir + '/simulated_metagenome_num_reads_{num_read}.fastq', num_read=num_reads_list)
-
 rule create_metagenomes:
     input:
         expand(script_dir + '/simulate_metagenome.py', num_reads=num_reads_list),
         expand(data_dir + '/genome_ref_full.fa', num_reads=num_reads_list)
     output:
         data_dir + '/simulated_metagenome_num_reads_{num_reads}.fastq'
-        #expand(data_dir + '/simulated_metagenome_num_reads_{num_reads}.fastq', num_reads=num_reads_list)
     shell:
         "python {input[0]} -r {input[1]} -o " + data_dir + "/simulated_metagenome_num_reads_{wildcards.num_reads}.fastq -n {wildcards.num_reads} -l " + str(read_length) + " --num_orgs " + str(num_organisms)
-    #run:
-    #    for num_reads in num_reads_list:
-    #        shell("python {input[0]} -r {input[1]} -o " + data_dir + "/simulated_metagenome_num_reads_" + num_reads + ".fastq -n " + num_reads + " -l " + str(read_length) + " --num_orgs " + str(num_organisms))
 
 
 rule setup_initials:
