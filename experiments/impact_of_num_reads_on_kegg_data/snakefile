@@ -57,7 +57,7 @@ rule run_sourmash:
     output:
         data_dir+'/sourmash_gather_num_reads{num_reads}'
     benchmark:
-        data_dir + "/sourmash_gather_benchmark"
+        data_dir + "/sourmash_gather_benchmark_{num_reads}"
     shell:
         '{input[0]} -r ' + data_dir+'/protein_ref_truncated.faa' + ' -m ' + data_dir + '/simulated_metagenome_num_reads_{wildcards.num_reads}.fastq' + ' -o ' + data_dir + ' -k ' + str(k) + ' --ref_scale_size ' + str(ref_scale) + ' --query_scale_size ' + str(query_scale) + ' --query_translate -t ' + str(threshold_bp) + ' -g ' + data_dir+'/sourmash_gather_num_reads{wildcards.num_reads}'
 
