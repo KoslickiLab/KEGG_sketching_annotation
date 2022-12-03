@@ -34,4 +34,4 @@ rule setup_initials:
         data_dir + '/protein_ref_full.faa',
         data_dir + '/protein_ref_truncated.faa'
     shell:
-        'bash {input[0]} ' + script_dir + ' ' + data_dir + ' ' + str(num_genomes_full_db) + ' ' + str(num_genomes_truncated_db) + ' ' + str(read_length) + ' ' + str(k) + ' ' + str(ref_scale) + ' ' + str(query_scale) + ' ' + str(thresholdBP) + ' ' + genome_path
+        'bash {input[0]} ' + script_dir + ' ' + data_dir + ' ' + str(num_genomes_full_db) + ' ' + str(num_genomes_truncated_db) + ' ' + str(read_length) + ' ' + str(k) + ' ' + str(ref_scale) + ' ' + str(query_scale) + ' ' + str(threshold_bp) + ' ' + genome_path
