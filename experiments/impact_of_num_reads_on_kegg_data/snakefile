@@ -27,9 +27,9 @@ rule run_diamond:
         data_dir+'/diamond_benchmark'
     run:
         for num_reads in num_reads_list:
-            cmd = '{input[0]} -r %s -m %s -o %s' % ( data_dir+'/protein_ref_truncated.faa', data_dir+'/simulated_metagenome_num_reads_%s.fastq'%(num_reads), data_dir+'/diamond_output_file_num_reads_'+num_reads )
+            cmd = 'python {input[0]} -r %s -m %s -o %s' % ( data_dir+'/protein_ref_truncated.faa', data_dir+'/simulated_metagenome_num_reads_%s.fastq'%(num_reads), data_dir+'/diamond_output_file_num_reads_'+num_reads )
             shell(cmd)
-            cmd = '{input[1]} -g %s -s %s -o %s' % ( data_dir+'/ground_truth_num_reads_%s.csv'%(num_reads), data_dir+'/diamond_output_file_num_reads_'+num_reads, data_dir+'/diamond_performance_metrics_num_reads_'+num_reads )
+            cmd = 'python {input[1]} -g %s -s %s -o %s' % ( data_dir+'/ground_truth_num_reads_%s.csv'%(num_reads), data_dir+'/diamond_output_file_num_reads_'+num_reads, data_dir+'/diamond_performance_metrics_num_reads_'+num_reads )
             shell(cmd)
 
 
