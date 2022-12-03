@@ -24,11 +24,13 @@ def main():
     parser.add_argument('-r', '--reference_file', type=str, help="The reference file (fna or faa) that you want to compare against.")
     parser.add_argument('-m', '--metagenome', type=str, help="The simulated metagenome.")
     parser.add_argument('-o', '--out_dir', type=str, help="The output directory.")
+    parser.add_argument('-d', '--diamond_file', type=str, help="The output diamond file.")
     # parse the args
     args = parser.parse_args()
     reference_file = args.reference_file
     metagenome_file = args.metagenome
     out_dir = args.out_dir
+    diamond_file = args.diamond_file
     # check args
     if not exists(out_dir):
         os.makedirs(out_dir)
@@ -40,7 +42,9 @@ def main():
         warnings.warn(f"Diamond database {ref_db} does not appear to exist. Making it now. This may take some time.")
         build_diamond_db(reference_file, ref_db)
     # Do the alignment
-    out_file = os.path.join(out_dir, f"{os.path.basename(metagenome_file)}_{os.path.basename(ref_db)}_matches.csv")
+    out_file = diamond_file
+    if out_file is None:
+        out_file = os.path.join(out_dir, f"{os.path.basename(metagenome_file)}_{os.path.basename(ref_db)}_matches.csv")
     run_diamond_blastx(metagenome_file, ref_db, out_file)
     # Calculate the results
     # TODO: use the find_genes_in_sim.py script to calculate the results
