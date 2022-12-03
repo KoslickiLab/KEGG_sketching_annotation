@@ -28,10 +28,8 @@ rule run_diamond:
     run:
         for num_reads in num_reads_list:
             cmd = 'python {input[0]} -r %s -m %s -o %s -d %s' % ( data_dir+'/protein_ref_truncated.faa', data_dir+'/simulated_metagenome_num_reads_%s.fastq'%(num_reads), data_dir, data_dir+'/diamond_output_file_num_reads_'+num_reads )
-            print(cmd)
             shell(cmd)
             cmd = 'python {input[1]} -g %s -s %s -o %s' % ( data_dir+'/ground_truth_num_reads_%s.csv'%(num_reads), data_dir+'/diamond_output_file_num_reads_'+num_reads, data_dir+'/diamond_performance_metrics_num_reads_'+num_reads )
-            print(cmd)
             shell(cmd)
 
 
@@ -72,16 +70,23 @@ rule create_ground_truth:
         for num_reads in num_reads_list:
             shell('python {input[0]} --database_dir ' + genome_path + ' --simulation ' + data_dir + '/simulated_metagenome_num_reads_' + num_reads + '.fastq --output_file ' + data_dir + '/ground_truth_num_reads_' + num_reads + '.csv' + ' --num_genomes ' + str(num_genomes_full_db))
 
+rule all:
+    input:
+        expand(data_dir + '/simulated_metagenome_num_reads_{num_reads}.fastq', num_reads=num_reads_list)
 
 rule create_metagenomes:
     input:
-        script_dir + '/simulate_metagenome.py',
-        data_dir + '/genome_ref_full.fa'
+        expand(script_dir + '/simulate_metagenome.py', num_reads=num_reads_list),
+        expand(data_dir + '/genome_ref_full.fa', num_reads=num_reads_list)
+
     output:
-        expand(data_dir + '/simulated_metagenome_num_reads_{num_reads}.fastq', num_reads=num_reads_list)
-    run:
-        for num_reads in num_reads_list:
-            shell("python {input[0]} -r {input[1]} -o " + data_dir + "/simulated_metagenome_num_reads_" + num_reads + ".fastq -n " + num_reads + " -l " + str(read_length) + " --num_orgs " + str(num_organisms))
+        data_dir + '/simulated_metagenome_num_reads_{num_reads}.fastq'
+        #expand(data_dir + '/simulated_metagenome_num_reads_{num_reads}.fastq', num_reads=num_reads_list)
+    shell:
+        "python {input[0]} -r {input[1]} -o " + data_dir + "/simulated_metagenome_num_reads_{wildcards.num_reads}.fastq -n {wildcards.num_reads} -l " + str(read_length) + " --num_orgs " + str(num_organisms)
+    #run:
+    #    for num_reads in num_reads_list:
+    #        shell("python {input[0]} -r {input[1]} -o " + data_dir + "/simulated_metagenome_num_reads_" + num_reads + ".fastq -n " + num_reads + " -l " + str(read_length) + " --num_orgs " + str(num_organisms))
 
 
 rule setup_initials:
