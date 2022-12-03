@@ -23,6 +23,7 @@ rule run_sourmash:
     run:
         for num_reads in num_reads_list:
             cmd = '{input[0]} -r %s -m %s -o %s -k %s --ref_scale_size %s --query_scale_size %s --query_translate -t %s -g %s' % (data_dir+'/protein_ref_truncated.faa', data_dir + '/simulated_metagenome_num_reads_' + num_reads + '.fastq', data_dir, str(k), str(ref_scale), str(query_scale), str(threshold_bp), data_dir+'/sourmash_gather_num_reads' + num_reads)
+            print(cmd)
             shell(cmd)
 
 rule create_ground_truth:
