@@ -10,20 +10,19 @@ genomeDatabaseFull="$dataDir/genome_ref_full.fa"
 genomeDatabaseTruncated="$dataDir/genome_ref_truncated.fa"
 proteinDatabaseFull="$dataDir/protein_ref_full.faa"
 proteinDatabaseTruncated="$dataDir/protein_ref_truncated.faa"
-simulatedMetagenome="$dataDir/simulatedMetagenome.fastq"
-genomePath="../extracted_genomes_from_kegg"
+genomePath=$10
 
 # set variables
-numGenomes=30
+numGenomes=$3
 numGenomesFullDB=$numGenomes
-numGenomesTruncatedDB=20
+numGenomesTruncatedDB=$4
 #numReads=100000
-readLen=150
+readLen=$5
 numGenes=1000
-kSize=7  # decreasing this increases sensitivity at cost of FP's
-refScale=10  # the higher this number, the faster things run, the smaller the database, at the cost of less sensitivity
-queryScale=1  # likely will want to keep this at one (no down-sampling of the query)
-thresholdBP=50  # this has the largest impact on FNs and FPs: setting it higher filters out more false positives, at the cost of more false negatives
+kSize=$6  # decreasing this increases sensitivity at cost of FP's
+refScale=$7  # the higher this number, the faster things run, the smaller the database, at the cost of less sensitivity
+queryScale=$8  # likely will want to keep this at one (no down-sampling of the query)
+thresholdBP=$9  # this has the largest impact on FNs and FPs: setting it higher filters out more false positives, at the cost of more false negatives
 
 # create the full genome reference database
 echo "$scriptDir/create_genome_ref_db.py $genomePath $genomeDatabaseFull $numGenomesFullDB"
