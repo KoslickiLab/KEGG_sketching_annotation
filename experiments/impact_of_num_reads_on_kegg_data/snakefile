@@ -21,8 +21,8 @@ rule get_sourmash_results:
     output:
         expand(data_dir+'/sourmash_performance_metrics_num_reads_{nr}', nr=num_reads_list)
     run:
-        for num_read in num_reads_list:
-            cmd = '{input[0]} -g %s -s %s -o %s' % ( data_dir+'/ground_truth_num_reads_%s.csv'%(num_read), data_dir+'/sourmash_gather_num_reads'+num_reads, data_dir+'/sourmash_performance_metrics_num_reads_'+num_reads )
+        for num_reads in num_reads_list:
+            cmd = '{input[0]} -g %s -s %s -o %s' % ( data_dir+'/ground_truth_num_reads_%s.csv'%(num_reads), data_dir+'/sourmash_gather_num_reads'+num_reads, data_dir+'/sourmash_performance_metrics_num_reads_'+num_reads )
             shell(cmd)
 
 rule run_sourmash:
