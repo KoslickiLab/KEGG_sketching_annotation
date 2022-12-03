@@ -21,7 +21,7 @@ rule create_ground_truth:
         expand(data_dir + '/ground_truth_num_reads_{nr}.csv', nr=num_reads_list)
     run:
         for num_reads in num_reads_list:
-            'python {input[0]} --database_dir ' + genome_path + ' --simulation ' + data_dir + '/simulated_metagenome_num_reads_' + num_reads + '.fastq --output_file ' + data_dir + '/ground_truth_num_reads_' + num_reads + '.csv' + ' --num_genomes ' + str(num_genomes_full_db)
+            shell('python {input[0]} --database_dir ' + genome_path + ' --simulation ' + data_dir + '/simulated_metagenome_num_reads_' + num_reads + '.fastq --output_file ' + data_dir + '/ground_truth_num_reads_' + num_reads + '.csv' + ' --num_genomes ' + str(num_genomes_full_db))
 
 
 rule create_metagenomes:
