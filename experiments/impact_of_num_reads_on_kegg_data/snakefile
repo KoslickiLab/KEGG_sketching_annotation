@@ -26,7 +26,7 @@ rule get_diamond_perf_metrics:
         expand( data_dir+'/diamond_performance_metrics_num_reads_{nr}', nr=num_reads_list )
     run:
         for num_reads in num_reads_list:
-            cmd = 'python {input[1]} -g %s -s %s -o %s' % ( data_dir+'/ground_truth_num_reads_%s.csv'%(num_reads), data_dir+'/diamond_output_file_num_reads_'+num_reads, data_dir+'/diamond_performance_metrics_num_reads_'+num_reads )
+            cmd = 'python {input[0]} -g %s -s %s -o %s' % ( data_dir+'/ground_truth_num_reads_%s.csv'%(num_reads), data_dir+'/diamond_output_file_num_reads_'+num_reads, data_dir+'/diamond_performance_metrics_num_reads_'+num_reads )
             shell(cmd)
 
 rule run_diamond:
@@ -39,7 +39,7 @@ rule run_diamond:
         expand( data_dir+'/diamond_output_file_num_reads_{nr}', nr=num_reads_list )
     benchmark:
         data_dir+'/diamond_benchmark_num_reads_{nr}'
-    run:
+    shell:
         '{input[0]} -g ' + data_dir+'/ground_truth_num_reads_{wildcards.nr}.csv' + ' -s ' + data_dir+'/sourmash_gather_num_reads{wilcards.nr}' + ' -o ' + data_dir+'/sourmash_performance_metrics_num_reads_{wildcards.nr}'
 
 
