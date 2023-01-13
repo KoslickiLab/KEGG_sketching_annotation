@@ -39,7 +39,7 @@ rule run_diamond:
     benchmark:
         data_dir+'/diamond_benchmark_num_reads_{num_reads}'
     shell:
-        '{input[0]} -g ' + data_dir+'/ground_truth_num_reads_{wildcards.num_reads}.csv' + ' -s ' + data_dir+'/sourmash_gather_num_reads{wilcards.num_reads}' + ' -o ' + data_dir+'/sourmash_performance_metrics_num_reads_{wildcards.num_reads}'
+        '{input[0]} -g ' + data_dir+'/ground_truth_num_reads_{wildcards.num_reads}.csv' + ' -s ' + data_dir+'/sourmash_gather_num_reads{wildcards.num_reads}' + ' -o ' + data_dir+'/sourmash_performance_metrics_num_reads_{wildcards.num_reads}'
 
 
 rule get_sourmash_results:
