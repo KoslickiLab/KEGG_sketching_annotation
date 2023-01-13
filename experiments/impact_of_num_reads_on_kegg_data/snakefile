@@ -39,7 +39,7 @@ rule run_diamond:
     benchmark:
         data_dir+'/diamond_benchmark_num_reads_{num_reads}'
     shell:
-        '{input[0]} -r ' + data_dir+'/protein_ref_truncated.faa' + ' -m ' + data_dir+'/simulated_metagenome_num_reads_{wildcards.num_reads}.fastq' + ' -o ' + data_dir + ' -d ' + data_dir+'/diamond_output_file_num_reads_{num_reads}'
+        '{input[0]} -r ' + data_dir+'/protein_ref_truncated.faa' + ' -m ' + data_dir+'/simulated_metagenome_num_reads_{wildcards.num_reads}.fastq' + ' -o ' + data_dir + ' -d ' + data_dir+'/diamond_output_file_num_reads_{wildcards.num_reads}'
 
 
 rule get_sourmash_results:
