@@ -33,8 +33,7 @@ rule run_diamond:
     input:
         script_dir+'/classify_diamond.py',
         data_dir+'/protein_ref_truncated.faa',
-        expand(data_dir+'/simulated_metagenome_num_reads_{nr}.fastq', nr=num_reads_list),
-        expand(data_dir+'/ground_truth_num_reads_{nr}.csv', nr=num_reads_list)
+        expand(data_dir+'/simulated_metagenome_num_reads_{nr}.fastq', nr=num_reads_list)
     output:
         expand( data_dir+'/diamond_output_file_num_reads_{nr}', nr=num_reads_list )
     benchmark:
