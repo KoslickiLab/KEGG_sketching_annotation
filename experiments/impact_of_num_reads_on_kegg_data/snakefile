@@ -1,11 +1,11 @@
 script_dir = '../../scripts'
-data_dir = 'large_expt_data'
+data_dir = 'large_expt_thr_bp_50'
 
 read_length = 150
 k = 7
 ref_scale = 10
 query_scale = 1
-threshold_bp = 100
+threshold_bp = 50
 num_organisms = 30
 num_genomes_full_db = 30
 num_genomes_truncated_db = 20
