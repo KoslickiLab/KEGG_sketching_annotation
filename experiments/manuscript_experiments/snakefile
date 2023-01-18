@@ -3,16 +3,16 @@ data_dir = 'data'
 
 read_length = 150
 k = 7
-ref_scale = 100
+ref_scale = 10
 query_scale = 1
 threshold_bp = 50
 num_organisms = 30
 num_genomes_full_db = 30
 num_genomes_truncated_db = 20
 genome_path = '../extracted_genomes_from_kegg'
-num_reads_list = ['2000', '3000']
-seeds_list = ['0', '1']
-kmer_sizes = ['5', '7']
+num_reads_list = ['50000', '100000', '150000']
+seeds_list = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
+kmer_sizes = ['5', '7', '9']
 
 rule all:
     input:
