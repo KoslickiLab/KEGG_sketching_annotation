@@ -17,7 +17,7 @@ kmer_sizes = ['5', '7']
 rule all:
     input:
         expand(data_dir+'/diamond_performance_metrics_num_reads_{nr}_seed_{seed}', nr=num_reads_list, seed=seeds_list),
-        expand(data_dir+'/sourmash_performance_metrics_num_reads_{nr}_seed_{seed}', nr=num_reads_list, seed=seeds_list)
+        expand(data_dir+'/sourmash_performance_metrics_num_reads_{nr}_seed_{seed}_k_{k}', nr=num_reads_list, seed=seeds_list, k=kmer_sizes)
 
 rule get_diamond_perf_metrics:
     input:
