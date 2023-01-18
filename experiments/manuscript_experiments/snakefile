@@ -62,7 +62,7 @@ rule run_sourmash:
     benchmark:
         data_dir + "/sourmash_gather_benchmark_{num_reads}_seed_{seed}_k_{k}"
     shell:
-        '{input[0]} -r ' + data_dir+'/protein_ref_truncated.faa' + ' -m ' + data_dir + '/simulated_metagenome_num_reads_{wildcards.num_reads}_seed_{wildcards.seed}.fastq' + ' -o ' + data_dir + ' -k {wildcards.k} --ref_scale_size ' + str(ref_scale) + ' --query_scale_size ' + str(query_scale) + ' --query_translate -t ' + str(threshold_bp) + ' -g ' + data_dir + '/sourmash_gather_num_reads_{wildcards.num_reads}_seed_{wildcards.seed}'
+        '{input[0]} -r ' + data_dir+'/protein_ref_truncated.faa' + ' -m ' + data_dir + '/simulated_metagenome_num_reads_{wildcards.num_reads}_seed_{wildcards.seed}.fastq' + ' -o ' + data_dir + ' -k {wildcards.k} --ref_scale_size ' + str(ref_scale) + ' --query_scale_size ' + str(query_scale) + ' --query_translate -t ' + str(threshold_bp) + ' -g ' + data_dir + '/sourmash_gather_num_reads_{wildcards.num_reads}_seed_{wildcards.seed}_k_{wildcards.k}'
 
 rule create_ground_truth:
     input:
