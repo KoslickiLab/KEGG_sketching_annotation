@@ -24,11 +24,9 @@ rule get_diamond_perf_metrics:
         expand( data_dir+'/diamond_output_file_num_reads_{nr}_seed_{seed}', nr=num_reads_list, seed=seeds_list ),
         expand(data_dir+'/ground_truth_num_reads_{nr}_seed_{seed}.csv', nr=num_reads_list, seed=seeds_list)
     output:
-        expand( data_dir+'/diamond_performance_metrics_num_reads_{nr}_seed_{seed}', nr=num_reads_list, seed=seeds_list )
-    run:
-        for num_reads in num_reads_list:
-            cmd = 'python {input[0]} -g %s -s %s -o %s' % ( data_dir+'/ground_truth_num_reads_%s_seed_%s.csv'%(num_reads, seed), data_dir+'/diamond_output_file_num_reads_'+num_reads+'_seed_'+seed, data_dir+'/diamond_performance_metrics_num_reads_'+num_reads+'_seed_'+seed )
-            shell(cmd)
+        data_dir+'/diamond_performance_metrics_num_reads_{nr}_seed_{seed}'
+    shell:
+        'python {input[0]} -g ' + data_dir+'/ground_truth_num_reads_{wildcards.nr}_seed_{wildcards.seed}.csv' + ' -s ' + data_dir+'/diamond_output_file_num_reads_{wildcards.nr}_seed_{wildcards.seed}' + ' -o ' + data_dir+'/diamond_performance_metrics_num_reads_{wildcards.nr}_seed_{wildcards.seed}'
 
 rule run_diamond:
     input:
@@ -46,12 +44,12 @@ rule run_diamond:
 rule get_sourmash_results:
     input:
         script_dir+'/calculate_sourmash_performance.py',
-        expand(data_dir+'/ground_truth_num_reads_{nr}_seed_{seed}.csv', nr=num_reads_list, seed=seeds_list),
+        expand(data_dir+'/ground_truth_num_reads_{num_reads}_seed_{seed}.csv', num_reads=num_reads_list, seed=seeds_list),
         expand(data_dir+'/sourmash_gather_num_reads_{num_reads}_seed_{seed}', num_reads=num_reads_list, seed=seeds_list)
     output:
-        expand(data_dir+'/sourmash_performance_metrics_num_reads_{nr}_seed_{seed}', nr=num_reads_list, seed=seeds_list)
+        data_dir+'/sourmash_performance_metrics_num_reads_{nr}_seed_{seed}'
     run:
-        '{input[0]} -g %s -s %s -o %s' % ( data_dir+'/ground_truth_num_reads_%s_seed_%s.csv'%(num_reads, seed), data_dir+'/sourmash_gather_num_reads_'+num_reads+'_seed_'+seed, data_dir+'/sourmash_performance_metrics_num_reads_'+num_reads )
+        '{input[0]} -g ' + data_dir+'/ground_truth_num_reads_{wildcards.num_reads}_seed_{wildcards.seed}.csv' + ' -s ' + data_dir+'/sourmash_gather_num_reads_{wildcards.num_reads}_seed_{wildcards.seed}' + ' -o ' + data_dir+'/sourmash_performance_metrics_num_reads_{wildcards.num_reads}_seed_{wildcards.seed}'
 
 rule run_sourmash:
     input:
