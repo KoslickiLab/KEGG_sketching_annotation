@@ -14,7 +14,7 @@ bbtools_loc = os.path.abspath(f"{THIS_DIR}/../utils/bbmap")
 diamond_loc = os.path.abspath(f"{THIS_DIR}/../utils/")
 
 
-def run_simulation(reference_file, out_file, num_reads, len_reads=150, noisy=False, num_orgs=250):
+def run_simulation(reference_file, out_file, num_reads, len_reads=150, noisy=False, num_orgs=250, seed=0):
     """
     This function runs a simulation using bbtools "randomreads.sh"
     :param reference_file: The input sequences from which to make a metagenome
@@ -54,7 +54,7 @@ def run_simulation(reference_file, out_file, num_reads, len_reads=150, noisy=Fal
             cmd += f"snprate={snprate} insrate={insrate} delrate={delrate} subrate={subrate} nrate={nrate} "
         else:
             cmd += f"snprate=0 insrate=0 delrate=0 subrate=0 nrate=0 maxsnps=0 maxinss=0 maxdels=0 maxsubs=0 maxns=0 adderrors=f "
-        cmd += f"ref={subsample_ref_file.name} out={out_file} reads={num_reads} length={len_reads} "
+        cmd += f"ref={subsample_ref_file.name} out={out_file} reads={num_reads} length={len_reads} seed={seed}"
         res = subprocess.run(cmd, stdout=subprocess.PIPE, shell=True)
         if res.returncode != 0:
             raise Exception(f"The command {cmd} exited with nonzero exit code {res.returncode}")

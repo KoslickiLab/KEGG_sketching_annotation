@@ -1,0 +1,97 @@
+script_dir = '../../scripts'
+data_dir = 'data'
+
+read_length = 150
+k = 7
+ref_scale = 10
+query_scale = 1
+threshold_bp = 50
+num_organisms = 30
+num_genomes_full_db = 30
+num_genomes_truncated_db = 20
+genome_path = '../extracted_genomes_from_kegg'
+num_reads_list = ['10000', '30000']
+seeds_list = ['0', '1']
+
+rule all:
+    input:
+        expand(data_dir+'/diamond_performance_metrics_num_reads_{nr}', nr=num_reads_list),
+        expand(data_dir+'/sourmash_performance_metrics_num_reads_{nr}', nr=num_reads_list)
+
+rule get_diamond_perf_metrics:
+    input:
+        script_dir+'/calculate_diamond_performance.py',
+        expand( data_dir+'/diamond_output_file_num_reads_{nr}', nr=num_reads_list ),
+        expand(data_dir+'/ground_truth_num_reads_{nr}.csv', nr=num_reads_list)
+    output:
+        expand( data_dir+'/diamond_performance_metrics_num_reads_{nr}', nr=num_reads_list )
+    run:
+        for num_reads in num_reads_list:
+            cmd = 'python {input[0]} -g %s -s %s -o %s' % ( data_dir+'/ground_truth_num_reads_%s.csv'%(num_reads), data_dir+'/diamond_output_file_num_reads_'+num_reads, data_dir+'/diamond_performance_metrics_num_reads_'+num_reads )
+            shell(cmd)
+
+rule run_diamond:
+    input:
+        script_dir+'/classify_diamond.py',
+        data_dir+'/protein_ref_truncated.faa',
+        expand(data_dir+'/simulated_metagenome_num_reads_{num_reads}.fastq', num_reads=num_reads_list)
+    output:
+        data_dir+'/diamond_output_file_num_reads_{num_reads}'
+    benchmark:
+        data_dir+'/diamond_benchmark_num_reads_{num_reads}'
+    shell:
+        '{input[0]} -r ' + data_dir+'/protein_ref_truncated.faa' + ' -m ' + data_dir+'/simulated_metagenome_num_reads_{wildcards.num_reads}.fastq' + ' -o ' + data_dir + ' -d ' + data_dir+'/diamond_output_file_num_reads_{wildcards.num_reads}'
+
+
+rule get_sourmash_results:
+    input:
+        script_dir+'/calculate_sourmash_performance.py',
+        expand(data_dir+'/ground_truth_num_reads_{nr}.csv', nr=num_reads_list),
+        expand(data_dir+'/sourmash_gather_num_reads{num_reads}', num_reads=num_reads_list)
+    output:
+        expand(data_dir+'/sourmash_performance_metrics_num_reads_{nr}', nr=num_reads_list)
+    run:
+        '{input[0]} -g %s -s %s -o %s' % ( data_dir+'/ground_truth_num_reads_%s.csv'%(num_reads), data_dir+'/sourmash_gather_num_reads'+num_reads, data_dir+'/sourmash_performance_metrics_num_reads_'+num_reads )
+
+rule run_sourmash:
+    input:
+        script_dir + '/classify_sourmash.py',
+        data_dir+'/protein_ref_truncated.faa',
+        expand( data_dir + '/simulated_metagenome_num_reads_{num_reads}.fastq', num_reads=num_reads_list )
+    output:
+        data_dir+'/sourmash_gather_num_reads{num_reads}'
+    benchmark:
+        data_dir + "/sourmash_gather_benchmark_{num_reads}"
+    shell:
+        '{input[0]} -r ' + data_dir+'/protein_ref_truncated.faa' + ' -m ' + data_dir + '/simulated_metagenome_num_reads_{wildcards.num_reads}.fastq' + ' -o ' + data_dir + ' -k ' + str(k) + ' --ref_scale_size ' + str(ref_scale) + ' --query_scale_size ' + str(query_scale) + ' --query_translate -t ' + str(threshold_bp) + ' -g ' + data_dir+'/sourmash_gather_num_reads{wildcards.num_reads}'
+
+rule create_ground_truth:
+    input:
+        script_dir + '/find_genes_in_sim.py',
+        expand(data_dir + '/simulated_metagenome_num_reads_{num_reads}.fastq', num_reads=num_reads_list),
+    output:
+        data_dir+'/ground_truth_num_reads_{num_reads}.csv'
+    shell:
+        'python {input[0]} --database_dir ' + genome_path + ' --simulation ' + data_dir + '/simulated_metagenome_num_reads_{wildcards.num_reads}.fastq --output_file ' + data_dir + '/ground_truth_num_reads_{wildcards.num_reads}.csv' + ' --num_genomes ' + str(num_genomes_full_db)
+
+rule create_metagenomes:
+    input:
+        expand(script_dir + '/simulate_metagenome.py', num_reads=num_reads_list),
+        expand(data_dir + '/genome_ref_full.fa', num_reads=num_reads_list)
+    output:
+        data_dir + '/simulated_metagenome_num_reads_{num_reads}.fastq'
+    shell:
+        "python {input[0]} -r {input[1]} -o " + data_dir + "/simulated_metagenome_num_reads_{wildcards.num_reads}.fastq -n {wildcards.num_reads} -l " + str(read_length) + " --num_orgs " + str(num_organisms) + ' --seed ' + '0'
+
+
+rule setup_initials:
+    input:
+        "setup.sh",
+        script_dir + '/create_genome_ref_db.py'
+    output:
+        data_dir + '/genome_ref_full.fa',
+        data_dir + '/genome_ref_truncated.fa',
+        data_dir + '/protein_ref_full.faa',
+        data_dir + '/protein_ref_truncated.faa'
+    shell:
+        'bash {input[0]} ' + script_dir + ' ' + data_dir + ' ' + str(num_genomes_full_db) + ' ' + str(num_genomes_truncated_db) + ' ' + str(read_length) + ' ' + str(k) + ' ' + str(ref_scale) + ' ' + str(query_scale) + ' ' + str(threshold_bp) + ' ' + genome_path
