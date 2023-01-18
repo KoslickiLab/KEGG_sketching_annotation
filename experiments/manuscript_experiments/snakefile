@@ -3,7 +3,7 @@ data_dir = 'data'
 
 read_length = 150
 k = 7
-ref_scale = 10
+ref_scale = 100
 query_scale = 1
 threshold_bp = 50
 num_organisms = 30
@@ -12,6 +12,7 @@ num_genomes_truncated_db = 20
 genome_path = '../extracted_genomes_from_kegg'
 num_reads_list = ['2000', '3000']
 seeds_list = ['0', '1']
+kmer_sizes = ['5', '7']
 
 rule all:
     input:
@@ -45,23 +46,23 @@ rule get_sourmash_results:
     input:
         script_dir+'/calculate_sourmash_performance.py',
         expand(data_dir+'/ground_truth_num_reads_{num_reads}_seed_{seed}.csv', num_reads=num_reads_list, seed=seeds_list),
-        expand(data_dir+'/sourmash_gather_num_reads_{num_reads}_seed_{seed}', num_reads=num_reads_list, seed=seeds_list)
+        expand(data_dir+'/sourmash_gather_num_reads_{num_reads}_seed_{seed}_k_{k}', num_reads=num_reads_list, seed=seeds_list, k=kmer_sizes)
     output:
-        data_dir+'/sourmash_performance_metrics_num_reads_{num_reads}_seed_{seed}'
+        data_dir+'/sourmash_performance_metrics_num_reads_{num_reads}_seed_{seed}_k_{k}'
     shell:
-        '{input[0]} -g ' + data_dir+'/ground_truth_num_reads_{wildcards.num_reads}_seed_{wildcards.seed}.csv' + ' -s ' + data_dir+'/sourmash_gather_num_reads_{wildcards.num_reads}_seed_{wildcards.seed}' + ' -o ' + data_dir+'/sourmash_performance_metrics_num_reads_{wildcards.num_reads}_seed_{wildcards.seed}'
+        '{input[0]} -g ' + data_dir+'/ground_truth_num_reads_{wildcards.num_reads}_seed_{wildcards.seed}.csv' + ' -s ' + data_dir+'/sourmash_gather_num_reads_{wildcards.num_reads}_seed_{wildcards.seed}_k_{wildcards.k}' + ' -o ' + data_dir+'/sourmash_performance_metrics_num_reads_{wildcards.num_reads}_seed_{wildcards.seed}_k_{wildcards.k}'
 
 rule run_sourmash:
     input:
         script_dir + '/classify_sourmash.py',
         data_dir+'/protein_ref_truncated.faa',
-        expand( data_dir + '/simulated_metagenome_num_reads_{num_reads}_seed_{seed}.fastq', num_reads=num_reads_list, seed=seeds_list )
+        expand( data_dir + '/simulated_metagenome_num_reads_{num_reads}_seed_{seed}_k_{k}.fastq', num_reads=num_reads_list, seed=seeds_list, k=kmer_sizes )
     output:
-        data_dir+'/sourmash_gather_num_reads_{num_reads}_seed_{seed}'
+        data_dir+'/sourmash_gather_num_reads_{num_reads}_seed_{seed}_k_{k}'
     benchmark:
-        data_dir + "/sourmash_gather_benchmark_{num_reads}_seed_{seed}"
+        data_dir + "/sourmash_gather_benchmark_{num_reads}_seed_{seed}_k_{k}"
     shell:
-        '{input[0]} -r ' + data_dir+'/protein_ref_truncated.faa' + ' -m ' + data_dir + '/simulated_metagenome_num_reads_{wildcards.num_reads}_seed_{wildcards.seed}.fastq' + ' -o ' + data_dir + ' -k ' + str(k) + ' --ref_scale_size ' + str(ref_scale) + ' --query_scale_size ' + str(query_scale) + ' --query_translate -t ' + str(threshold_bp) + ' -g ' + data_dir + '/sourmash_gather_num_reads_{wildcards.num_reads}_seed_{wildcards.seed}'
+        '{input[0]} -r ' + data_dir+'/protein_ref_truncated.faa' + ' -m ' + data_dir + '/simulated_metagenome_num_reads_{wildcards.num_reads}_seed_{wildcards.seed}.fastq' + ' -o ' + data_dir + ' -k {wildcards.k} --ref_scale_size ' + str(ref_scale) + ' --query_scale_size ' + str(query_scale) + ' --query_translate -t ' + str(threshold_bp) + ' -g ' + data_dir + '/sourmash_gather_num_reads_{wildcards.num_reads}_seed_{wildcards.seed}'
 
 rule create_ground_truth:
     input:
