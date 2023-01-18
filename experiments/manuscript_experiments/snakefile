@@ -15,8 +15,8 @@ seeds_list = ['0', '1']
 
 rule all:
     input:
-        expand(data_dir+'/diamond_performance_metrics_num_reads_{nr}', nr=num_reads_list),
-        expand(data_dir+'/sourmash_performance_metrics_num_reads_{nr}', nr=num_reads_list)
+        expand(data_dir+'/diamond_performance_metrics_num_reads_{nr}_seed_{seed}', nr=num_reads_list, seed=seeds_list),
+        expand(data_dir+'/sourmash_performance_metrics_num_reads_{nr}_seed_{seed}', nr=num_reads_list, seed=seeds_list)
 
 rule get_diamond_perf_metrics:
     input:
