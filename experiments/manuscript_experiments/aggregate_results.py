@@ -26,11 +26,34 @@ def get_diamond_running_time(num_reads, seed):
     return float(time_str)
 
 def get_all_diamond_running_times(num_reads):
-    for seed in seeds_list:
-        print( get_diamond_running_time(num_reads, seed) )
+    return [ get_diamond_running_time(num_reads, seed) for seed in seeds_list ]
+
+def get_sourmash_running_time(num_reads, ksize, seed):
+    filename = data_dir + f"/sourmash_gather_benchmark_{num_reads}_seed_{seed}_k_{ksize}"
+    f = open(filename, 'r')
+    time_str = f.readlines()[1].split('\t')[0]
+    f.close()
+    return float(time_str)
+
+def get_all_sourmash_running_times(num_reads, ksize):
+    return [get_sourmash_running_time(num_reads, ksize, seed) for seed in seeds_list]
+
+def get_diamond_precision(num_reads, seed):
+    filename = data_dir+f'/diamond_performance_metrics_num_reads_{num_reads}_seed_{seed}'
+    f = open(filename, 'r')
+    prec_str = f.readlines()[2].split(',')[3]
+    f.close()
+    return float(prec_str)
+
+def get_diamond_recall(num_reads, seed):
+    filename = data_dir+f'/diamond_performance_metrics_num_reads_{num_reads}_seed_{seed}'
+    f = open(filename, 'r')
+    prec_str = f.readlines()[2].split(',')[4]
+    f.close()
+    return float(prec_str)
+
 
 if __name__ == "__main__":
-    for num_reads in num_reads_list:
-        print(f"Num reads: {num_reads}")
-        get_all_diamond_running_times(num_reads)
-    
+    num_reads = 100000
+    for seed in seeds_list:
+        print(get_diamond_recall(num_reads, seed))
