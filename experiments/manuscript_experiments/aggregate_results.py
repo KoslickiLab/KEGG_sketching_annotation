@@ -52,6 +52,13 @@ def get_diamond_recall(num_reads, seed):
     f.close()
     return float(prec_str)
 
+def get_diamond_F1(num_reads, seed):
+    filename = data_dir+f'/diamond_performance_metrics_num_reads_{num_reads}_seed_{seed}'
+    f = open(filename, 'r')
+    prec_str = f.readlines()[2].split(',')[5]
+    f.close()
+    return float(prec_str)
+
 
 if __name__ == "__main__":
     num_reads = 100000

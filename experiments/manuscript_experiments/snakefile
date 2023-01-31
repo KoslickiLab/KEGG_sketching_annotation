@@ -11,29 +11,29 @@ num_genomes_full_db = 30
 num_genomes_truncated_db = 20
 genome_path = '../extracted_genomes_from_kegg'
 num_reads_list = ['50000', '100000', '150000']
-seeds_list = ['13', '14', '15', '16', '17', '18', '19']
-kmer_sizes = ['5', '7', '9']
+seeds_list = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19']
+kmer_sizes = ['11', '15']
 
 rule all:
     input:
-        expand(data_dir+'/diamond_performance_metrics_num_reads_{nr}_seed_{seed}', nr=num_reads_list, seed=seeds_list),
-        expand(data_dir+'/sourmash_performance_metrics_num_reads_{nr}_seed_{seed}_k_{k}', nr=num_reads_list, seed=seeds_list, k=kmer_sizes)
+        expand(data_dir+'/diamond_performance_metrics_num_reads_{num_reads}_seed_{seed}', num_reads=num_reads_list, seed=seeds_list),
+        expand(data_dir+'/sourmash_performance_metrics_num_reads_{num_reads}_seed_{seed}_k_{k}', num_reads=num_reads_list, seed=seeds_list, k=kmer_sizes)
 
 rule get_diamond_perf_metrics:
     input:
         script_dir+'/calculate_diamond_performance.py',
-        expand( data_dir+'/diamond_output_file_num_reads_{nr}_seed_{seed}', nr=num_reads_list, seed=seeds_list ),
-        expand(data_dir+'/ground_truth_num_reads_{nr}_seed_{seed}.csv', nr=num_reads_list, seed=seeds_list)
+        data_dir+'/diamond_output_file_num_reads_{num_reads}_seed_{seed}',
+        data_dir+'/ground_truth_num_reads_{num_reads}_seed_{seed}.csv'
     output:
-        data_dir+'/diamond_performance_metrics_num_reads_{nr}_seed_{seed}'
+        data_dir+'/diamond_performance_metrics_num_reads_{num_reads}_seed_{seed}'
     shell:
-        'python {input[0]} -g ' + data_dir+'/ground_truth_num_reads_{wildcards.nr}_seed_{wildcards.seed}.csv' + ' -s ' + data_dir+'/diamond_output_file_num_reads_{wildcards.nr}_seed_{wildcards.seed}' + ' -o ' + data_dir+'/diamond_performance_metrics_num_reads_{wildcards.nr}_seed_{wildcards.seed}'
+        'python {input[0]} -g ' + data_dir+'/ground_truth_num_reads_{wildcards.num_reads}_seed_{wildcards.seed}.csv' + ' -s ' + data_dir+'/diamond_output_file_num_reads_{wildcards.num_reads}_seed_{wildcards.seed}' + ' -o ' + data_dir+'/diamond_performance_metrics_num_reads_{wildcards.num_reads}_seed_{wildcards.seed}'
 
 rule run_diamond:
     input:
         script_dir+'/classify_diamond.py',
         data_dir+'/protein_ref_truncated.faa',
-        expand(data_dir+'/simulated_metagenome_num_reads_{num_reads}_seed_{seed}.fastq', num_reads=num_reads_list, seed=seeds_list)
+        data_dir+'/simulated_metagenome_num_reads_{num_reads}_seed_{seed}.fastq'
     output:
         data_dir+'/diamond_output_file_num_reads_{num_reads}_seed_{seed}'
     benchmark:
@@ -45,8 +45,8 @@ rule run_diamond:
 rule get_sourmash_results:
     input:
         script_dir+'/calculate_sourmash_performance.py',
-        expand(data_dir+'/ground_truth_num_reads_{num_reads}_seed_{seed}.csv', num_reads=num_reads_list, seed=seeds_list),
-        expand(data_dir+'/sourmash_gather_num_reads_{num_reads}_seed_{seed}_k_{k}', num_reads=num_reads_list, seed=seeds_list, k=kmer_sizes)
+        data_dir+'/ground_truth_num_reads_{num_reads}_seed_{seed}.csv',
+        data_dir+'/sourmash_gather_num_reads_{num_reads}_seed_{seed}_k_{k}'
     output:
         data_dir+'/sourmash_performance_metrics_num_reads_{num_reads}_seed_{seed}_k_{k}'
     shell:
@@ -56,7 +56,7 @@ rule run_sourmash:
     input:
         script_dir + '/classify_sourmash.py',
         data_dir+'/protein_ref_truncated.faa',
-        expand( data_dir + '/simulated_metagenome_num_reads_{num_reads}_seed_{seed}.fastq', num_reads=num_reads_list, seed=seeds_list )
+        data_dir + '/simulated_metagenome_num_reads_{num_reads}_seed_{seed}.fastq'
     output:
         data_dir+'/sourmash_gather_num_reads_{num_reads}_seed_{seed}_k_{k}'
     benchmark:
@@ -67,7 +67,7 @@ rule run_sourmash:
 rule create_ground_truth:
     input:
         script_dir + '/find_genes_in_sim.py',
-        expand(data_dir + '/simulated_metagenome_num_reads_{num_reads}_seed_{seed}.fastq', num_reads=num_reads_list, seed=seeds_list)
+        data_dir + '/simulated_metagenome_num_reads_{num_reads}_seed_{seed}.fastq'
     output:
         data_dir+'/ground_truth_num_reads_{num_reads}_seed_{seed}.csv'
     shell:
@@ -75,8 +75,8 @@ rule create_ground_truth:
 
 rule create_metagenomes:
     input:
-        expand(script_dir + '/simulate_metagenome.py', num_reads=num_reads_list, seed=seeds_list),
-        expand(data_dir + '/genome_ref_full.fa', num_reads=num_reads_list, seed=seeds_list)
+        script_dir + '/simulate_metagenome.py',
+        data_dir + '/genome_ref_full.fa'
     output:
         data_dir + '/simulated_metagenome_num_reads_{num_reads}_seed_{seed}.fastq'
     shell:
