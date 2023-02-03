@@ -1,3 +1,5 @@
+import numpy as np
+
 script_dir = '../../scripts'
 data_dir = 'data'
 read_length = 150
@@ -10,8 +12,8 @@ num_genomes_full_db = 30
 num_genomes_truncated_db = 20
 genome_path = '../extracted_genomes_from_kegg'
 num_reads_list = ['50000', '100000', '150000']
-seeds_list = [str(i) for i in range(10)]
-kmer_sizes = ['5', '7', '9']
+seeds_list = [str(i) for i in range(20)]
+kmer_sizes = ['5', '7', '9', '11', '15']
 
 data_dir+'/diamond_performance_metrics_num_reads_{nr}_seed_{seed}'
 data_dir+'/sourmash_performance_metrics_num_reads_{nr}_seed_{seed}_k_{k}'
@@ -59,8 +61,97 @@ def get_diamond_F1(num_reads, seed):
     f.close()
     return float(prec_str)
 
+def get_sourmash_precision(num_reads, seed, k):
+    filename = data_dir+f'/sourmash_performance_metrics_num_reads_{num_reads}_seed_{seed}_k_{k}'
+    f = open(filename, 'r')
+    prec_str = f.readlines()[2].split(',')[3]
+    f.close()
+    return float(prec_str)
+
+def get_sourmash_recall(num_reads, seed, k):
+    filename = data_dir+f'/sourmash_performance_metrics_num_reads_{num_reads}_seed_{seed}_k_{k}'
+    f = open(filename, 'r')
+    prec_str = f.readlines()[2].split(',')[4]
+    f.close()
+    return float(prec_str)
+
+def get_sourmash_F1(num_reads, seed, k):
+    filename = data_dir+f'/sourmash_performance_metrics_num_reads_{num_reads}_seed_{seed}_k_{k}'
+    f = open(filename, 'r')
+    prec_str = f.readlines()[2].split(',')[5]
+    f.close()
+    return float(prec_str)
+
 
 if __name__ == "__main__":
-    num_reads = 100000
-    for seed in seeds_list:
-        print(get_diamond_recall(num_reads, seed))
+    print('Precisions:')
+
+    for num_reads in num_reads_list:
+        res = [get_diamond_precision(num_reads, seed) for seed in seeds_list]
+        print(np.mean(res), end = ' ')
+    print('')
+    for k in kmer_sizes:
+        for num_reads in num_reads_list:
+            res = [get_sourmash_precision(num_reads, seed, k) for seed in seeds_list]
+            print(np.mean(res), end = ' ')
+        print('')
+
+    print('Precision std. devs:')
+
+    for num_reads in num_reads_list:
+        res = [get_diamond_precision(num_reads, seed) for seed in seeds_list]
+        print(np.std(res), end = ' ')
+    print('')
+    for k in kmer_sizes:
+        for num_reads in num_reads_list:
+            res = [get_sourmash_precision(num_reads, seed, k) for seed in seeds_list]
+            print(np.std(res), end = ' ')
+        print('')
+
+    print('Recalls:')
+
+    for num_reads in num_reads_list:
+        res = [get_diamond_recall(num_reads, seed) for seed in seeds_list]
+        print(np.mean(res), end = ' ')
+    print('')
+    for k in kmer_sizes:
+        for num_reads in num_reads_list:
+            res = [get_sourmash_recall(num_reads, seed, k) for seed in seeds_list]
+            print(np.mean(res), end = ' ')
+        print('')
+
+    print('Recall std. devs:')
+
+    for num_reads in num_reads_list:
+        res = [get_diamond_recall(num_reads, seed) for seed in seeds_list]
+        print(np.std(res), end = ' ')
+    print('')
+    for k in kmer_sizes:
+        for num_reads in num_reads_list:
+            res = [get_sourmash_recall(num_reads, seed, k) for seed in seeds_list]
+            print(np.std(res), end = ' ')
+        print('')
+
+    print('F1 scores:')
+
+    for num_reads in num_reads_list:
+        res = [get_diamond_F1(num_reads, seed) for seed in seeds_list]
+        print(np.mean(res), end = ' ')
+    print('')
+    for k in kmer_sizes:
+        for num_reads in num_reads_list:
+            res = [get_sourmash_F1(num_reads, seed, k) for seed in seeds_list]
+            print(np.mean(res), end = ' ')
+        print('')
+
+    print('F1 std. devs:')
+
+    for num_reads in num_reads_list:
+        res = [get_diamond_F1(num_reads, seed) for seed in seeds_list]
+        print(np.std(res), end = ' ')
+    print('')
+    for k in kmer_sizes:
+        for num_reads in num_reads_list:
+            res = [get_sourmash_F1(num_reads, seed, k) for seed in seeds_list]
+            print(np.std(res), end = ' ')
+        print('')
