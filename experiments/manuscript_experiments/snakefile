@@ -12,7 +12,7 @@ num_genomes_truncated_db = 20
 genome_path = '../extracted_genomes_from_kegg'
 num_reads_list = ['50000', '100000', '150000']
 seeds_list = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19']
-kmer_sizes = ['11', '15']
+kmer_sizes = [11', '15']
 
 rule all:
     input:

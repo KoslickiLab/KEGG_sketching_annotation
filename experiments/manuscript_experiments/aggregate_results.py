@@ -156,26 +156,30 @@ if __name__ == "__main__":
             print(np.std(res), end = ' ')
         print('')
 
-    print('Running times:')
+    print('Log of Running times:')
 
     for num_reads in num_reads_list:
         res = [get_diamond_running_time(num_reads, seed) for seed in seeds_list]
+        res = np.log(res)
         print(np.mean(res), end = ' ')
     print('')
     for k in kmer_sizes:
         for num_reads in num_reads_list:
             res = [get_sourmash_running_time(num_reads, k, seed) for seed in seeds_list]
+            res = np.log(res)
             print(np.mean(res), end = ' ')
         print('')
 
-    print('Running times STD-DEV:')
+    print('Log of Running times STD-DEV:')
 
     for num_reads in num_reads_list:
         res = [get_diamond_running_time(num_reads, seed) for seed in seeds_list]
+        res = np.log(res)
         print(np.std(res), end = ' ')
     print('')
     for k in kmer_sizes:
         for num_reads in num_reads_list:
             res = [get_sourmash_running_time(num_reads, k, seed) for seed in seeds_list]
+            res = np.log(res)
             print(np.std(res), end = ' ')
         print('')
