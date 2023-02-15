@@ -155,3 +155,27 @@ if __name__ == "__main__":
             res = [get_sourmash_F1(num_reads, seed, k) for seed in seeds_list]
             print(np.std(res), end = ' ')
         print('')
+
+    print('Running times:')
+
+    for num_reads in num_reads_list:
+        res = [get_diamond_running_time(num_reads, seed) for seed in seeds_list]
+        print(np.mean(res), end = ' ')
+    print('')
+    for k in kmer_sizes:
+        for num_reads in num_reads_list:
+            res = [get_sourmash_running_time(num_reads, k, seed) for seed in seeds_list]
+            print(np.mean(res), end = ' ')
+        print('')
+
+    print('Running times STD-DEV:')
+
+    for num_reads in num_reads_list:
+        res = [get_diamond_running_time(num_reads, seed) for seed in seeds_list]
+        print(np.std(res), end = ' ')
+    print('')
+    for k in kmer_sizes:
+        for num_reads in num_reads_list:
+            res = [get_sourmash_running_time(num_reads, k, seed) for seed in seeds_list]
+            print(np.std(res), end = ' ')
+        print('')
