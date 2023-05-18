@@ -10,7 +10,7 @@ num_organisms = 30
 num_genomes_full_db = 30
 num_genomes_truncated_db = 20
 genome_path = '../extracted_genomes_from_kegg'
-num_reads_list = ['10000', '30000', '50000', '75000', '100000', '150000', '200000']
+num_reads_list = ['100000', '150000', '200000']
 
 rule all:
     input:
